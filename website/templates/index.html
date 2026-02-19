@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLSR // QUANTUM_OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #050508; color: #fff; font-family: 'Courier New', monospace; overflow: hidden; }
+        .glass { background: rgba(0, 255, 163, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(0, 255, 163, 0.1); }
+        .neon-glow { color: #00ffa3; text-shadow: 0 0 15px rgba(0,255,163,0.6); }
+        .btn-liquid { background: linear-gradient(135deg, #00ffa3 0%, #00d4ff 100%); color: #000; font-weight: 900; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <div class="glass w-full max-w-xl rounded-[40px] p-12 text-center relative">
+        <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-[#00ffa3] rounded-full blur-[80px] opacity-20"></div>
+        
+        <h1 class="text-4xl neon-glow mb-2 italic">Gemini_Pulse</h1>
+        <p class="text-[10px] opacity-40 tracking-[0.4em] uppercase mb-12">Universal Node Interface</p>
+
+        <div class="space-y-6">
+            <input type="text" id="wallet" placeholder="DESTINATION_ADDRESS (0x...)" 
+                   class="w-full bg-black/40 border-b border-[#00ffa3]/30 p-4 text-center focus:outline-none focus:border-[#00ffa3]">
+            
+            <button onclick="triggerSync()" class="btn-liquid w-full py-5 rounded-2xl shadow-[0_10px_30px_rgba(0,255,163,0.3)] hover:scale-[1.02] transition-transform">
+                SYNC_CONSCIOUSNESS
+            </button>
+        </div>
+
+        <div id="output" class="mt-12 h-20 text-xs opacity-60 overflow-y-auto leading-relaxed">
+            > SYSTEM READY...
+        </div>
+    </div>
+
+    <script>
+        async function triggerSync() {
+            const out = document.getElementById('output');
+            const addr = document.getElementById('wallet').value;
+            out.innerHTML += `<br>> INITIATING QUANTUM_LINK TO ${addr.slice(0,10)}...`;
+            
+            try {
+                const res = await fetch('/api/mine', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({address: addr})
+                });
+                const data = await res.json();
+                out.innerHTML += `<br>> SYNC_SUCCESS: <span class="text-[#00ffa3]">${data.tx.slice(0,20)}...</span>`;
+            } catch(e) { out.innerHTML += `<br>> ERROR: LINK_FAILED`; }
+        }
+    </script>
+</body>
+</html>
