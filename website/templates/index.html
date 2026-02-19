@@ -3,106 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLSR // NEURAL_NET</title>
+    <title>BLSR // NEURAL_PULSE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;700&display=swap');
-        body { background: #010103; color: #fff; font-family: 'Fira Code', monospace; overflow: hidden; }
-        
-        .neon-red { color: #ff003c; text-shadow: 0 0 15px #ff003c, 0 0 30px #ff003c; }
-        .neon-green { color: #00ffa3; text-shadow: 0 0 10px #00ffa3; }
-        .neon-blue { color: #00d4ff; text-shadow: 0 0 10px #00d4ff; }
-        .neon-purple { color: #bc00ff; text-shadow: 0 0 10px #bc00ff; }
-        
-        .console-box { background: rgba(0,0,0,0.8); border: 1px solid rgba(0,255,163,0.1); backdrop-filter: blur(10px); }
-        .char-span { transition: color 0.1s; }
-        
-        /* Scanline effect */
-        body::after { content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); z-index: 2; background-size: 100% 2px, 3px 100%; pointer-events: none; }
+        body { background: #020205; color: #fff; font-family: 'Fira Code', monospace; overflow: hidden; }
+        .neon-red { color: #ff003c; text-shadow: 0 0 20px #ff003c, 0 0 40px #ff003c; font-weight: 900; }
+        .neon-cyan { color: #00ffa3; text-shadow: 0 0 10px #00ffa3; }
+        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(15px); border: 1px solid rgba(0, 255, 163, 0.2); }
+        .char { transition: color 0.05s; }
+        @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .final-lock { animation: pulse-red 0.5s infinite; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center">
-    <div class="console-box w-full max-w-2xl p-10 rounded-3xl relative z-10 shadow-[0_0_50px_rgba(0,255,163,0.1)]">
-        <div class="mb-8 border-b border-white/10 pb-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold neon-green tracking-tighter">BITCOIN_SOLAR // MINER_v4.0</h1>
-            <div id="number-display" class="text-3xl font-black">0</div>
+    
+    <div class="glass w-full max-w-xl p-10 rounded-[2.5rem] relative z-10">
+        <div class="flex justify-between items-center mb-10">
+            <h1 class="text-xs tracking-[0.4em] opacity-40 uppercase">Lynnic_Neural_Link</h1>
+            <div id="spinner" class="text-4xl font-black opacity-20 transition-all duration-500">0</div>
         </div>
 
-        <div id="output" class="h-64 overflow-y-auto mb-8 space-y-2 text-sm">
-            <div class="opacity-30">> INITIALIZING_SYSTEM...</div>
+        <div id="terminal" class="h-48 overflow-y-auto mb-8 text-[11px] space-y-1 font-mono leading-tight">
+            <div class="opacity-20">> SYSTEM_IDLE...</div>
         </div>
 
-        <div class="flex gap-4">
-            <input type="text" id="wallet" placeholder="0x_WALLET_ADDRESS" 
-                   class="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 focus:outline-none focus:border-[#00ffa3] transition-all">
-            <button onclick="startMiningProcess()" class="bg-[#00ffa3] text-black px-8 rounded-xl font-black hover:scale-105 active:scale-95 transition-all">SYNC</button>
+        <div class="space-y-4">
+            <input type="text" id="wallet" placeholder="0x_HEX_ADDRESS" 
+                   class="w-full bg-black/40 border-b border-white/10 p-4 focus:outline-none focus:border-[#00ffa3] transition-all text-center">
+            <button onclick="executeSequence()" class="w-full py-5 bg-white text-black font-black rounded-2xl hover:bg-[#00ffa3] transition-all tracking-widest uppercase">
+                Initialize_Sync
+            </button>
         </div>
     </div>
 
-    <audio id="sound-success" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
-    <audio id="sound-tick" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio id="bg-loop" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3"></audio>
+    <audio id="snd-tick" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio id="snd-lock" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
 
     <script>
-        const neonColors = ['neon-green', 'neon-blue', 'neon-purple', 'neon-red'];
-        
-        // 1. Text Animation Logic (Random Color Letters)
-        function typeLog(text) {
-            const output = document.getElementById('output');
+        const neonColors = ['#00ffa3', '#00d4ff', '#bc00ff', '#ffea00'];
+        const terminal = document.getElementById('terminal');
+        const spinner = document.getElementById('spinner');
+
+        function addLog(text) {
             const line = document.createElement('div');
-            output.appendChild(line);
-            
-            let i = 0;
-            const interval = setInterval(() => {
-                const span = document.createElement('span');
-                span.innerText = text[i];
-                span.className = neonColors[Math.floor(Math.random() * neonColors.length)];
-                line.appendChild(span);
-                i++;
-                if (i >= text.length) clearInterval(interval);
-            }, 30);
-            output.scrollTop = output.scrollHeight;
-        }
-
-        // 2. Number Spinner Logic (0-10, stops at target in Red)
-        async function spinNumber(target) {
-            const display = document.getElementById('number-display');
-            const tickSound = document.getElementById('sound-tick');
-            
-            for (let i = 0; i <= 10; i++) {
-                display.innerText = i;
-                display.className = neonColors[Math.floor(Math.random() * (neonColors.length - 1))];
-                tickSound.currentTime = 0;
-                tickSound.play();
-                await new Promise(r => setTimeout(r, 80));
-                if (i === target) break;
-            }
-            display.innerText = target;
-            display.className = 'neon-red text-5xl'; // Final stop in Red
-        }
-
-        // 3. Main Sequence
-        async function startMiningProcess() {
-            const wallet = document.getElementById('wallet').value;
-            if (!wallet) return alert("ENTER WALLET");
-
-            typeLog(`> AUTHENTICATING_NODE: ${wallet.slice(0,10)}...`);
-            await new Promise(r => setTimeout(r, 1000));
-            
-            typeLog(`> CONNECTION_STABLE // SEARCHING_BLOCKS...`);
-            await spinNumber(7); // Spinnng to a random block number
-
-            const response = await fetch('/api/mine', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({address: wallet})
+            terminal.appendChild(line);
+            text.split('').forEach((c, i) => {
+                const s = document.createElement('span');
+                s.innerText = c;
+                s.style.color = neonColors[Math.floor(Math.random() * neonColors.length)];
+                setTimeout(() => line.appendChild(s), i * 20);
             });
-            const data = await response.json();
+            terminal.scrollTop = terminal.scrollHeight;
+        }
 
-            if (data.status === "Success") {
-                document.getElementById('sound-success').play();
-                typeLog(`> JOB_ACCEPTED // BLOCK_SOLVED!`);
-                typeLog(`> TX: ${data.tx.slice(0,24)}...`);
+        async function executeSequence() {
+            document.getElementById('bg-loop').play();
+            const addr = document.getElementById('wallet').value;
+            if(!addr) return;
+
+            addLog(`> AUTHENTICATING_NODE_${addr.slice(0,8)}...`);
+            addLog(`> ESTABLISHING_LYNNIC_AMBIENCE...`);
+
+            // Spinner Logic: 0 to 10
+            for(let i = 0; i <= 10; i++) {
+                spinner.innerText = i;
+                spinner.style.color = neonColors[Math.floor(Math.random() * neonColors.length)];
+                spinner.style.opacity = "1";
+                document.getElementById('snd-tick').currentTime = 0;
+                document.getElementById('snd-tick').play();
+                await new Promise(r => setTimeout(r, 100));
             }
+
+            // Final Lock: Neon Red
+            const luckyBlock = Math.floor(Math.random() * 9) + 1;
+            spinner.innerText = luckyBlock;
+            spinner.className = "text-7xl neon-red final-lock";
+            document.getElementById('snd-lock').play();
+            
+            addLog(`> JOB_ACCEPTED // BLOCK_${luckyBlock}_RESOLVED`);
+            addLog(`> MINING_REWARD_TRANSMITTED`);
         }
     </script>
 </body>
