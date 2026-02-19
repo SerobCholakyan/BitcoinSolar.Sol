@@ -1,7 +1,8 @@
 import re
 
-class SecurityLayer:
+class SecurityModule:
     @staticmethod
-    def validate_address(address):
-        """Standard EVM Address validation."""
-        return bool(re.match(r'^0x[a-fA-F0-9]{40}$', address))
+    def validate_evm_address(address):
+        # Checks for 0x followed by 40 hex characters
+        pattern = re.compile(r'^0x[a-fA-F0-9]{40}$')
+        return bool(pattern.match(address))
