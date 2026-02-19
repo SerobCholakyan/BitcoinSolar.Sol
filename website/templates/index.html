@@ -3,51 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLSR // QUANTUM_OS</title>
+    <title>GEMINI_PULSE // BLSR_CORE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #050508; color: #fff; font-family: 'Courier New', monospace; overflow: hidden; }
-        .glass { background: rgba(0, 255, 163, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(0, 255, 163, 0.1); }
-        .neon-glow { color: #00ffa3; text-shadow: 0 0 15px rgba(0,255,163,0.6); }
-        .btn-liquid { background: linear-gradient(135deg, #00ffa3 0%, #00d4ff 100%); color: #000; font-weight: 900; }
+        body { background: #030305; color: #fff; font-family: sans-serif; overflow: hidden; }
+        .orb { position: absolute; width: 300px; height: 300px; background: #00ffa3; filter: blur(100px); opacity: 0.1; top: -50px; left: -50px; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(0, 255, 163, 0.2); border-radius: 30px; }
+        .neon-text { color: #00ffa3; text-shadow: 0 0 10px #00ffa3; }
+        .btn-sync { background: linear-gradient(135deg, #00ffa3, #00d4ff); color: #000; font-weight: bold; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6">
-    <div class="glass w-full max-w-xl rounded-[40px] p-12 text-center relative">
-        <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-[#00ffa3] rounded-full blur-[80px] opacity-20"></div>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="orb"></div>
+    <div class="glass w-full max-w-md p-10 text-center shadow-2xl">
+        <h1 class="text-xs tracking-widest opacity-40 mb-4 uppercase font-mono">Quantum_Node_Active</h1>
+        <h2 class="text-4xl font-light mb-8">Gemini<span class="font-bold neon-text">Pulse</span></h2>
         
-        <h1 class="text-4xl neon-glow mb-2 italic">Gemini_Pulse</h1>
-        <p class="text-[10px] opacity-40 tracking-[0.4em] uppercase mb-12">Universal Node Interface</p>
-
-        <div class="space-y-6">
-            <input type="text" id="wallet" placeholder="DESTINATION_ADDRESS (0x...)" 
-                   class="w-full bg-black/40 border-b border-[#00ffa3]/30 p-4 text-center focus:outline-none focus:border-[#00ffa3]">
+        <div class="space-y-4">
+            <input type="text" id="wallet" placeholder="0x_DESTINATION_ADDRESS" 
+                   class="w-full bg-black/40 border-b border-cyan-900 p-4 text-center focus:outline-none focus:border-[#00ffa3] transition-all">
             
-            <button onclick="triggerSync()" class="btn-liquid w-full py-5 rounded-2xl shadow-[0_10px_30px_rgba(0,255,163,0.3)] hover:scale-[1.02] transition-transform">
+            <button onclick="runPulse()" class="btn-sync w-full py-5 rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all">
                 SYNC_CONSCIOUSNESS
             </button>
         </div>
 
-        <div id="output" class="mt-12 h-20 text-xs opacity-60 overflow-y-auto leading-relaxed">
-            > SYSTEM READY...
+        <div id="log" class="mt-10 text-[10px] opacity-30 font-mono h-12 overflow-hidden leading-tight italic">
+            > WAITING_FOR_SYNC...
         </div>
     </div>
 
     <script>
-        async function triggerSync() {
-            const out = document.getElementById('output');
+        async function runPulse() {
+            const log = document.getElementById('log');
             const addr = document.getElementById('wallet').value;
-            out.innerHTML += `<br>> INITIATING QUANTUM_LINK TO ${addr.slice(0,10)}...`;
+            log.innerHTML = `> ATTEMPTING_LINK_TO_${addr.slice(0,8)}...`;
             
-            try {
-                const res = await fetch('/api/mine', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({address: addr})
-                });
-                const data = await res.json();
-                out.innerHTML += `<br>> SYNC_SUCCESS: <span class="text-[#00ffa3]">${data.tx.slice(0,20)}...</span>`;
-            } catch(e) { out.innerHTML += `<br>> ERROR: LINK_FAILED`; }
+            const res = await fetch('/api/mine', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({address: addr})
+            });
+            const data = await res.json();
+            log.innerHTML = `> SYNC_COMPLETE: TX_${data.tx.slice(0,16)}...`;
         }
     </script>
 </body>
