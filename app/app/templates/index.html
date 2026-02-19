@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BitcoinSolar (BLSR) Official</title>
+    <style>
+        body { background: #050505; color: #00ff41; font-family: 'Courier New', monospace; }
+        .dashboard { display: flex; padding: 20px; gap: 20px; }
+        .terminal { flex: 2; border: 1px solid #333; height: 500px; padding: 15px; overflow-y: scroll; }
+        .stats { flex: 1; background: #111; padding: 20px; border-radius: 8px; }
+        .btn { background: #00ff41; color: black; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; width: 100%; }
+        .log-entry { margin-bottom: 5px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <h1>BITCOINSOLAR CORE <small>v3.0 Mainnet</small></h1>
+    <div class="dashboard">
+        <div class="terminal" id="term">
+            <div class="log-entry">[SYSTEM] Initializing Blockchain Bridge...</div>
+            <div class="log-entry">[SECURE] Vault Keys Authenticated...</div>
+        </div>
+        <div class="stats">
+            <h3>MARKET STATS</h3>
+            <p>1 BLSR = <span id="price">${{ price }}</span></p>
+            <hr>
+            <input type="text" id="wallet" placeholder="Your Wallet (0x...)" style="width:90%; margin-bottom:10px; background:#222; color:white; border:none; padding:10px;">
+            <button class="btn" onclick="startMining()">EXECUTE MINING SEQUENCE</button>
+        </div>
+    </div>
+
+    <script>
+        function log(msg) {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerText = `> ${msg}`;
+            document.getElementById('term').appendChild(div);
+        }
+
+        async function startMining() {
+            const wallet = document.getElementById('wallet').value;
+            if(!wallet) return alert("Enter Wallet Address");
+            
+            log(`Mining request sent for: ${wallet}`);
+            const res = await fetch('/mine', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({wallet: wallet})
+            });
+            const data = await res.json();
+            if(data.status === "SUCCESS") {
+                log(`BLOCK SOLVED! On-chain Tx: ${data.tx_hash}`);
+                log(`Reward: 0.5 BLSR credited.`);
+            } else {
+                log(`ERROR: ${data.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
