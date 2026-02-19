@@ -4,10 +4,10 @@ from web3 import Web3
 
 app = Flask(__name__)
 
-# CONFIGURATION (Use Replit Secrets for security)
-RPC_URL = os.getenv('POLYGON_RPC', "https://polygon-rpc.com")
-CONTRACT_ADDR = os.getenv('CONTRACT_ADDRESS')
-PRIVATE_KEY = os.getenv('ADMIN_PRIVATE_KEY')
+# CONFIG: Set these in Replit "Secrets"
+RPC_URL = os.environ.get('POLYGON_RPC', "https://polygon-rpc.com")
+ADMIN_KEY = os.environ.get('PRIVATE_KEY')
+CONTRACT_ADDR = os.environ.get('CONTRACT_ADDRESS')
 
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
 
@@ -21,7 +21,7 @@ def mine():
     abi = [{"inputs":[{"internalType":"address","name":"miner","type":"address"}],"name":"mintMiningReward","outputs":[],"stateMutability":"nonpayable","type":"function"}]
     
     contract = w3.eth.contract(address=CONTRACT_ADDR, abi=abi)
-    account = w3.eth.account.from_key(PRIVATE_KEY)
+    account = w3.eth.account.from_key(ADMIN_KEY)
     
     tx = contract.functions.mintMiningReward(user_address).build_transaction({
         'from': account.address,
@@ -30,9 +30,8 @@ def mine():
         'gasPrice': w3.eth.gas_price
     })
     
-    signed_tx = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
+    signed_tx = w3.eth.account.sign_transaction(tx, ADMIN_KEY)
     tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
-    
     return jsonify({"status": "Success", "tx": w3.to_hex(tx_hash)})
 
 if __name__ == "__main__":
