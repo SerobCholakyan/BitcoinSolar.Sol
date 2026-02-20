@@ -5,29 +5,44 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from dotenv import load_dotenv
 
-load_dotenv() # Load keys from .env file
+# Load variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
-w3 = Web3(Web3.HTTPProvider(os.getenv('POLYGON_RPC', 'https://polygon-rpc.com')))
+
+# --- BLOCKCHAIN CONFIG ---
+# Using your provided Infura URL
+RPC_URL = os.getenv('POLYGON_RPC', 'https://polygon-mainnet.infura.io/v3/3f69ffd3c39747099f55586c0dfbe8ed')
+w3 = Web3(Web3.HTTPProvider(RPC_URL))
+
+# REQUIRED: Polygon (and Infura) needs POA middleware to parse blocks correctly
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-# CONFIG
 CONTRACT_ADDRESS = os.getenv('CONTRACT_ADDRESS')
 PRIVATE_KEY = os.getenv('PRIVATE_KEY')
+
+# BitcoinSolar ABI (Simplified for Mining)
 ABI = '[{"inputs":[{"internalType":"address","name":"miner","type":"address"}],"name":"executeMining","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"totalMined","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}]'
 
 def background_mint(miner_address):
     try:
+        if not PRIVATE_KEY or not CONTRACT_ADDRESS:
+            print("Error: Missing Keys in .env")
+            return
+
         account = w3.eth.account.from_key(PRIVATE_KEY)
         contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=ABI)
+        
         tx = contract.functions.executeMining(miner_address).build_transaction({
             'from': account.address,
             'nonce': w3.eth.get_transaction_count(account.address),
             'gas': 250000,
             'gasPrice': w3.eth.gas_price
         })
+
         signed = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
-        w3.eth.send_raw_transaction(signed.rawTransaction)
+        tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+        print(f"Mining Successful for {miner_address} | TX: {tx_hash.hex()}")
     except Exception as e:
         print(f"Mining Fail: {e}")
 
@@ -37,12 +52,12 @@ def home():
 
 @app.route('/get_difficulty')
 def get_difficulty():
-    """Calculates scaling difficulty based on total supply."""
+    """Bitcoin-style difficulty scaling logic."""
     try:
         contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=ABI)
         mined = contract.functions.totalMined().call() / 10**18
-        # Scaled difficulty (Genesis = 2s, 21M = 100s)
-        difficulty = 2 + (mined / 2100000) * 10
+        # Scaled difficulty (Base 2s + supply weight)
+        difficulty = 2.0 + (mined / 2100000) * 10
         return jsonify({"difficulty": round(difficulty, 1)})
     except:
         return jsonify({"difficulty": 2.0})
@@ -52,6 +67,8 @@ def mine():
     miner_addr = request.json.get('address')
     if not w3.is_address(miner_addr):
         return jsonify({"status": "error", "message": "Invalid Address"})
+    
+    # Send transaction to Infura in background
     threading.Thread(target=background_mint, args=(miner_addr,)).start()
     return jsonify({"status": "success"})
 
