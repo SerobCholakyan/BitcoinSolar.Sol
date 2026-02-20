@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "description": "Monitor and harvest your BitcoinSolar yields.",
+  "proposedName": "BitcoinSolar Monitor",
+  "source": {
+    "location": {
+      "npm": {
+        "packageName": "bitcoin-solar-snap"
+      }
+    }
+  },
+  "initialPermissions": {
+    "endowment:transaction-insight": {},
+    "endowment:network-access": {},
+    "snap_dialog": {}
+  }
+}
