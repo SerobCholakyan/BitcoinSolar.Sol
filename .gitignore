@@ -14,3 +14,10 @@ replit.nix
 # Secrets (NEVER upload these)
 secrets.json
 .env
+.env
+
+__pycache__/
+*.pyc
+venv/
+.replit
+replit.nix
