@@ -1,0 +1,8 @@
+<footer style={{ padding: '20px', fontSize: '12px', color: '#666', textAlign: 'center' }}>
+  <p>© 2026 BitcoinSolar Network. All Rights Reserved.</p>
+  <p>
+    DISCLAIMER: BLSR is a decentralized utility token. 
+    The "Mining" process simulated in this app is for network participation and 
+    does not guarantee profit. We do not offer financial services.
+  </p>
+</footer>
