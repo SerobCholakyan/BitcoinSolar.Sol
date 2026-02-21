@@ -1,5 +1,30 @@
 import React, { useState } from 'react';
 import SingularityBackground from './SingularityBackground';
+import { useMinerEvents } from './useMinerEvents'; // The code above
+
+export default function MinerDashboard() {
+  const [solved, setSolved] = useState(false);
+
+  // This hook "listens" to the blockchain and sets 'solved' to true automatically
+  useMinerEvents(() => setSolved(true));
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <SingularityBackground 
+        isBlockSolved={solved} 
+        onAnimationComplete={() => setSolved(false)} 
+      />
+      
+      {/* Your Miner Stats/UI go here */}
+      <div className="stats-overlay">
+        <h1>BLSR MINER ACTIVE</h1>
+        <p>Searching for the next singularity...</p>
+      </div>
+    </div>
+  );
+}
+import React, { useState } from 'react';
+import SingularityBackground from './SingularityBackground';
 
 export default function MinerDashboard() {
   const [solved, setSolved] = useState(false);
