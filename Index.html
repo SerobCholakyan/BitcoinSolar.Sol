@@ -5,24 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BLSR Miner - Singularity Wallpaper</title>
 <style>
-  /* --- Base App Styling --- */
   body, html {
     margin: 0; padding: 0; width: 100%; height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: white; overflow: hidden;
-    background-color: #050510; /* Deep space dark */
+    background-color: #050510;
   }
 
-  /* --- Interactive Wallpaper Container --- */
   #wallpaper {
     position: absolute;
     top: 0; left: 0; width: 100vw; height: 100vh;
-    z-index: 1; /* Behind miner UI */
+    z-index: 1;
     overflow: hidden;
     background: radial-gradient(circle at center, #0f172a 0%, #000 100%);
   }
 
-  /* --- Glassmorphism Blockchain Bubbles --- */
   .bubble {
     position: absolute;
     border-radius: 50%;
@@ -41,8 +38,6 @@
     filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
   }
 
-  /* BLACK HOLE SINGULARITY EFFECTS */
-
   .bubble.blsr.singularity {
     transition: transform 1.5s cubic-bezier(0.25, 0.8, 0.25, 1),
                 box-shadow 1.5s cubic-bezier(0.25, 0.8, 0.25, 1),
@@ -58,7 +53,6 @@
     z-index: 100;
   }
 
-  /* Particle burst */
   .particle {
     position: absolute;
     width: 6px;
@@ -73,7 +67,6 @@
     transition: transform 0.6s ease-out, opacity 0.6s ease-out;
   }
 
-  /* Gravity wave ring */
   .gravity-wave {
     position: absolute;
     width: 40px;
@@ -88,7 +81,6 @@
     transition: transform 1.2s ease-out, opacity 1.2s ease-out;
   }
 
-  /* --- Miner UI Overlay (Dashboard) --- */
   #miner-ui {
     position: absolute;
     z-index: 10;
@@ -131,11 +123,10 @@
   <h2>Worker: ASIC-Rig-01</h2>
   <p>Hashrate: 145 TH/s</p>
   <p id="miner-status" style="color: #4ade80;">Status: Searching for blocks...</p>
-  
+  <p id="last-tx" style="font-size: 0.8rem; color: #9ca3af;">Last TX: none</p>
   <button id="test-block-btn">[TEST] Simulate Block Solved</button>
 </div>
 
-<!-- You provide this file in ./sounds -->
 <audio id="blackhole-sfx" src="sounds/blackhole_whoosh.mp3" preload="auto"></audio>
 
 <script>
@@ -157,6 +148,7 @@
   const blackholeSfx = document.getElementById('blackhole-sfx');
   const minerUi = document.getElementById('miner-ui');
   const minerStatus = document.getElementById('miner-status');
+  const lastTxEl = document.getElementById('last-tx');
 
   function playBlackHoleSound() {
     if (!blackholeSfx) return;
@@ -164,10 +156,10 @@
     blackholeSfx.play().catch(() => {});
   }
 
-  function flashBlockSolvedUI() {
+  function flashBlockSolvedUI(extraText) {
     if (!minerStatus) return;
     const oldText = minerStatus.textContent;
-    minerStatus.textContent = 'Block solved! Reward incoming...';
+    minerStatus.textContent = extraText || 'Block solved! Reward incoming...';
     minerUi.classList.add('block-solved');
 
     setTimeout(() => {
@@ -238,7 +230,7 @@
     });
 
     setTimeout(() => wave.remove(), 1300);
-  }
+    }
 
   function animateBubbles(timestamp) {
     bubbles.forEach(b => {
@@ -274,7 +266,7 @@
     requestAnimationFrame(animateBubbles);
   }
 
-  function onBlockSolved() {
+  function onBlockSolved(displayText) {
     if (isBlackHoleActive) return;
     isBlackHoleActive = true;
 
@@ -291,7 +283,7 @@
     singularityPos.y = singularity.y + singularity.size / 2;
 
     playBlackHoleSound();
-    flashBlockSolvedUI();
+    flashBlockSolvedUI(displayText);
     spawnGravityWave(singularityPos.x, singularityPos.y);
     spawnParticleBurst(singularityPos.x, singularityPos.y);
 
@@ -316,8 +308,11 @@
     }, 2200);
   }
 
-  function handleBlockSolvedEvent() {
-    onBlockSolved();
+  function handleBlockSolvedEvent(data) {
+    if (data && data.tx && lastTxEl) {
+      lastTxEl.textContent = `Last TX: ${data.tx}`;
+    }
+    onBlockSolved(data?.log ? 'Block solved! Minting BLSR…' : undefined);
   }
 
   function initBubbles() {
@@ -327,19 +322,16 @@
     requestAnimationFrame(animateBubbles);
   }
 
-  // Test button
   document.getElementById('test-block-btn').addEventListener('click', () => {
-    handleBlockSolvedEvent();
+    handleBlockSolvedEvent({ log: 'TEST BLOCK', tx: '0xTEST' });
   });
 
-  // Electron IPC hook (if running in Electron)
   if (window.minerAPI && typeof window.minerAPI.onBlockSolved === 'function') {
-    window.minerAPI.onBlockSolved(() => {
-      handleBlockSolvedEvent();
+    window.minerAPI.onBlockSolved((data) => {
+      handleBlockSolvedEvent(data);
     });
   }
 
-  // Start the wallpaper
   initBubbles();
 </script>
 
