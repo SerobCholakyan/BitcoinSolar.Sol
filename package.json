@@ -5,6 +5,9 @@
   "scripts": {
     "start": "electron ."
   },
+  "dependencies": {
+    "web3": "^4.13.0"
+  },
   "devDependencies": {
     "electron": "^32.0.0"
   }
