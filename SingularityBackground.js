@@ -1,3 +1,41 @@
+import { useEffect } from 'react';
+import { ethers } from 'ethers';
+
+// 1. Your Contract Info (Get these from Remix after deploying)
+const CONTRACT_ADDRESS = "0xYourDeployedContractAddressHere";
+const CONTRACT_ABI = [
+  "event Transfer(address indexed from, address indexed to, uint256 value)"
+];
+
+export function useMinerEvents(onBlockSolved) {
+  useEffect(() => {
+    const initListener = async () => {
+      // Connect to the Polygon network via MetaMask
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+
+      console.log("🌌 Gravity sensors active... watching for BLSR blocks.");
+
+      // 2. Listen for the 'Transfer' event 
+      // In ERC20, a 'Mint' is just a Transfer from the "0x0" address.
+      contract.on("Transfer", (from, to, value) => {
+        if (from === "0x0000000000000000000000000000000000000000") {
+          console.log("☄️ Block Solved! Singularity initiated...");
+          onBlockSolved(); // This triggers the Black Hole animation!
+        }
+      });
+    };
+
+    if (window.ethereum) {
+      initListener();
+    }
+    
+    // Cleanup listener when app closes
+    return () => {
+      // contract.removeAllListeners("Transfer");
+    };
+  }, [onBlockSolved]);
+}
 import React, { useEffect, useRef, useState } from 'react';
 
 const ICONS = {
