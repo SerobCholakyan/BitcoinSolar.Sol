@@ -180,11 +180,3 @@ This project is licensed under the MIT License.
 ---
 
 🌞 BitcoinSolar — Powering a Brighter Blockchain
-
-If you’d like, I can also generate:
-
-• A logo
-• A whitepaper
-• A tokenomics page
-• A press‑ready launch announcement
-• A website landing page
