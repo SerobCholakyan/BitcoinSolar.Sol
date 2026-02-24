@@ -1,48 +1,133 @@
 // miner-watcher.js
-const fs = require('fs');
-const EventEmitter = require('events');
+// Watches a miner log file and emits "blockSolved" when a solved block is detected.
+
+const fs = require("fs");
+const path = require("path");
+const readline = require("readline");
+const EventEmitter = require("events");
 
 class MinerWatcher extends EventEmitter {
   constructor(logPath) {
     super();
     this.logPath = logPath;
-    this.lastSize = 0;
-    this.init();
+    this.watcher = null;
+    this.stream = null;
+    this.rl = null;
+    this.lastSolvedLine = null;
+    this.started = false;
+
+    this._boot();
   }
 
-  init() {
-    if (!fs.existsSync(this.logPath)) {
-      console.log("Miner log not found:", this.logPath);
+  _boot() {
+    const dir = path.dirname(this.logPath);
+
+    if (!fs.existsSync(dir)) {
+      this.emit("error", new Error(`Log directory does not exist: ${dir}`));
       return;
     }
 
-    this.lastSize = fs.statSync(this.logPath).size;
+    // Ensure file exists
+    if (!fs.existsSync(this.logPath)) {
+      try {
+        fs.writeFileSync(this.logPath, "", { flag: "a" });
+      } catch (err) {
+        this.emit("error", err);
+        return;
+      }
+    }
 
-    fs.watchFile(this.logPath, { interval: 500 }, () => {
-      const stats = fs.statSync(this.logPath);
-      if (stats.size <= this.lastSize) return;
+    this._startTail();
+    this._startWatcher();
+  }
 
-      const stream = fs.createReadStream(this.logPath, {
-        start: this.lastSize,
-        end: stats.size
+  _startTail() {
+    try {
+      this.stream = fs.createReadStream(this.logPath, {
+        encoding: "utf8",
+        flags: "r",
       });
 
-      stream.on('data', chunk => {
-        const text = chunk.toString();
-        const lines = text.split(/\r?\n/);
+      this.rl = readline.createInterface({
+        input: this.stream,
+        crlfDelay: Infinity,
+      });
 
-        for (const line of lines) {
-          if (!line.trim()) continue;
+      this.rl.on("line", (line) => this._handleLine(line));
+      this.rl.on("error", (err) => this.emit("error", err));
 
-          // Adjust these markers to match your miner’s log format
-          if (line.includes("BLOCK SOLVED") || line.includes("FOUND BLOCK")) {
-            this.emit("blockSolved", line);
-          }
+      this.started = true;
+    } catch (err) {
+      this.emit("error", err);
+    }
+  }
+
+  _startWatcher() {
+    try {
+      this.watcher = fs.watch(this.logPath, (eventType) => {
+        if (eventType === "change") {
+          this._tailNewData();
         }
       });
+    } catch (err) {
+      this.emit("error", err);
+    }
+  }
 
-      this.lastSize = stats.size;
-    });
+  _tailNewData() {
+    // Close old stream and reopen from end
+    if (this.stream) {
+      this.stream.close();
+    }
+    if (this.rl) {
+      this.rl.close();
+    }
+    this._startTail();
+  }
+
+  _handleLine(line) {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    // Very simple heuristic: look for "block solved" or similar
+    const lower = trimmed.toLowerCase();
+    const isSolved =
+      lower.includes("block solved") ||
+      lower.includes("solution found") ||
+      lower.includes("share accepted");
+
+    if (!isSolved) return;
+
+    // Debounce duplicate lines
+    if (this.lastSolvedLine === trimmed) return;
+    this.lastSolvedLine = trimmed;
+
+    this.emit("blockSolved", trimmed);
+  }
+
+  stop() {
+    try {
+      if (this.watcher) {
+        this.watcher.close();
+        this.watcher = null;
+      }
+    } catch (_) {}
+
+    try {
+      if (this.rl) {
+        this.rl.close();
+        this.rl = null;
+      }
+    } catch (_) {}
+
+    try {
+      if (this.stream) {
+        this.stream.close();
+        this.stream = null;
+      }
+    } catch (_) {}
+
+    this.started = false;
   }
 }
 
