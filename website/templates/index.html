@@ -1,89 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLSR // NEURAL_PULSE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: #020205; color: #fff; font-family: 'Fira Code', monospace; overflow: hidden; }
-        .neon-red { color: #ff003c; text-shadow: 0 0 20px #ff003c, 0 0 40px #ff003c; font-weight: 900; }
-        .neon-cyan { color: #00ffa3; text-shadow: 0 0 10px #00ffa3; }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(15px); border: 1px solid rgba(0, 255, 163, 0.2); }
-        .char { transition: color 0.05s; }
-        @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .final-lock { animation: pulse-red 0.5s infinite; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>BitcoinSolar Node Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .shell {
+      width: 100%;
+      max-width: 720px;
+      border-radius: 24px;
+      padding: 2rem;
+      background: linear-gradient(145deg, rgba(15,23,42,0.95), rgba(3,7,18,0.98));
+      box-shadow: 0 25px 60px rgba(0,0,0,0.75), 0 0 24px rgba(251,191,36,0.35);
+      border: 1px solid rgba(148,163,184,0.25);
+    }
+    h1 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-size: 1.8rem;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      color: #9ca3af;
+    }
+    input {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid rgba(55,65,81,0.9);
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      outline: none;
+      margin-bottom: 0.75rem;
+    }
+    button {
+      padding: 0.6rem 1rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #facc15, #f97316, #fb923c);
+      color: #111827;
+    }
+    .btn-secondary {
+      background: linear-gradient(135deg, #22c55e, #4ade80);
+      color: #022c22;
+    }
+    .row {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    pre {
+      background: rgba(15,23,42,0.9);
+      border-radius: 16px;
+      padding: 1rem;
+      border: 1px solid rgba(55,65,81,0.8);
+      max-height: 260px;
+      overflow: auto;
+      font-size: 0.85rem;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex items-center justify-center">
-    
-    <div class="glass w-full max-w-xl p-10 rounded-[2.5rem] relative z-10">
-        <div class="flex justify-between items-center mb-10">
-            <h1 class="text-xs tracking-[0.4em] opacity-40 uppercase">Lynnic_Neural_Link</h1>
-            <div id="spinner" class="text-4xl font-black opacity-20 transition-all duration-500">0</div>
-        </div>
+<body>
+  <div class="shell">
+    <h1>BitcoinSolar Node Console</h1>
+    <p>Test your node address against the BitcoinSolar web API.</p>
 
-        <div id="terminal" class="h-48 overflow-y-auto mb-8 text-[11px] space-y-1 font-mono leading-tight">
-            <div class="opacity-20">> SYSTEM_IDLE...</div>
-        </div>
+    <input id="address" placeholder="Enter your EVM address (0x...)" />
 
-        <div class="space-y-4">
-            <input type="text" id="wallet" placeholder="0x_HEX_ADDRESS" 
-                   class="w-full bg-black/40 border-b border-white/10 p-4 focus:outline-none focus:border-[#00ffa3] transition-all text-center">
-            <button onclick="executeSequence()" class="w-full py-5 bg-white text-black font-black rounded-2xl hover:bg-[#00ffa3] transition-all tracking-widest uppercase">
-                Initialize_Sync
-            </button>
-        </div>
+    <div class="row">
+      <button class="btn-primary" onclick="callMine()">/api/mine</button>
+      <button class="btn-secondary" onclick="callVerify()">/api/verify</button>
     </div>
 
-    <audio id="bg-loop" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3"></audio>
-    <audio id="snd-tick" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
-    <audio id="snd-lock" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+    <div class="row">
+      <button class="btn-secondary" onclick="callSubmit()">/api/submit</button>
+      <button class="btn-primary" onclick="callReward()">/api/reward</button>
+    </div>
 
-    <script>
-        const neonColors = ['#00ffa3', '#00d4ff', '#bc00ff', '#ffea00'];
-        const terminal = document.getElementById('terminal');
-        const spinner = document.getElementById('spinner');
+    <pre id="output">Awaiting response…</pre>
+  </div>
 
-        function addLog(text) {
-            const line = document.createElement('div');
-            terminal.appendChild(line);
-            text.split('').forEach((c, i) => {
-                const s = document.createElement('span');
-                s.innerText = c;
-                s.style.color = neonColors[Math.floor(Math.random() * neonColors.length)];
-                setTimeout(() => line.appendChild(s), i * 20);
-            });
-            terminal.scrollTop = terminal.scrollHeight;
-        }
+  <script>
+    async function postJSON(path, body) {
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {})
+      });
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        return { raw: text };
+      }
+    }
 
-        async function executeSequence() {
-            document.getElementById('bg-loop').play();
-            const addr = document.getElementById('wallet').value;
-            if(!addr) return;
+    function getAddress() {
+      return document.getElementById('address').value.trim();
+    }
 
-            addLog(`> AUTHENTICATING_NODE_${addr.slice(0,8)}...`);
-            addLog(`> ESTABLISHING_LYNNIC_AMBIENCE...`);
+    function setOutput(data) {
+      document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    }
 
-            // Spinner Logic: 0 to 10
-            for(let i = 0; i <= 10; i++) {
-                spinner.innerText = i;
-                spinner.style.color = neonColors[Math.floor(Math.random() * neonColors.length)];
-                spinner.style.opacity = "1";
-                document.getElementById('snd-tick').currentTime = 0;
-                document.getElementById('snd-tick').play();
-                await new Promise(r => setTimeout(r, 100));
-            }
+    async function callMine() {
+      const address = getAddress();
+      const res = await postJSON('/api/mine', { address });
+      setOutput(res);
+    }
 
-            // Final Lock: Neon Red
-            const luckyBlock = Math.floor(Math.random() * 9) + 1;
-            spinner.innerText = luckyBlock;
-            spinner.className = "text-7xl neon-red final-lock";
-            document.getElementById('snd-lock').play();
-            
-            addLog(`> JOB_ACCEPTED // BLOCK_${luckyBlock}_RESOLVED`);
-            addLog(`> MINING_REWARD_TRANSMITTED`);
-        }
-    </script>
+    async function callVerify() {
+      const address = getAddress();
+      const res = await postJSON('/api/verify', { address });
+      setOutput(res);
+    }
+
+    async function callSubmit() {
+      const address = getAddress();
+      const share = 'mock-share-' + Math.random().toString(16).slice(2);
+      const res = await postJSON('/api/submit', { address, share });
+      setOutput(res);
+    }
+
+    async function callReward() {
+      const address = getAddress();
+      const amount = 0.01;
+      const res = await postJSON('/api/reward', { address, amount });
+      setOutput(res);
+    }
+  </script>
 </body>
 </html>
