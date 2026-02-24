@@ -10,16 +10,15 @@ class MinerWatcher extends EventEmitter {
   constructor(logPath) {
     super();
     this.logPath = logPath;
-    this.watcher = null;
     this.stream = null;
     this.rl = null;
+    this.watcher = null;
     this.lastSolvedLine = null;
-    this.started = false;
 
-    this._boot();
+    this._init();
   }
 
-  _boot() {
+  _init() {
     const dir = path.dirname(this.logPath);
 
     if (!fs.existsSync(dir)) {
@@ -27,14 +26,8 @@ class MinerWatcher extends EventEmitter {
       return;
     }
 
-    // Ensure file exists
     if (!fs.existsSync(this.logPath)) {
-      try {
-        fs.writeFileSync(this.logPath, "", { flag: "a" });
-      } catch (err) {
-        this.emit("error", err);
-        return;
-      }
+      fs.writeFileSync(this.logPath, "");
     }
 
     this._startTail();
@@ -42,46 +35,34 @@ class MinerWatcher extends EventEmitter {
   }
 
   _startTail() {
-    try {
-      this.stream = fs.createReadStream(this.logPath, {
-        encoding: "utf8",
-        flags: "r",
-      });
+    this.stream = fs.createReadStream(this.logPath, {
+      encoding: "utf8",
+      flags: "r",
+    });
 
-      this.rl = readline.createInterface({
-        input: this.stream,
-        crlfDelay: Infinity,
-      });
+    this.rl = readline.createInterface({
+      input: this.stream,
+      crlfDelay: Infinity,
+    });
 
-      this.rl.on("line", (line) => this._handleLine(line));
-      this.rl.on("error", (err) => this.emit("error", err));
-
-      this.started = true;
-    } catch (err) {
-      this.emit("error", err);
-    }
+    this.rl.on("line", (line) => this._handleLine(line));
+    this.rl.on("error", (err) => this.emit("error", err));
   }
 
   _startWatcher() {
-    try {
-      this.watcher = fs.watch(this.logPath, (eventType) => {
-        if (eventType === "change") {
-          this._tailNewData();
-        }
-      });
-    } catch (err) {
-      this.emit("error", err);
-    }
+    this.watcher = fs.watch(this.logPath, (eventType) => {
+      if (eventType === "change") {
+        this._restartTail();
+      }
+    });
   }
 
-  _tailNewData() {
-    // Close old stream and reopen from end
-    if (this.stream) {
-      this.stream.close();
-    }
-    if (this.rl) {
-      this.rl.close();
-    }
+  _restartTail() {
+    try {
+      this.stream?.close();
+      this.rl?.close();
+    } catch (_) {}
+
     this._startTail();
   }
 
@@ -89,7 +70,6 @@ class MinerWatcher extends EventEmitter {
     const trimmed = line.trim();
     if (!trimmed) return;
 
-    // Very simple heuristic: look for "block solved" or similar
     const lower = trimmed.toLowerCase();
     const isSolved =
       lower.includes("block solved") ||
@@ -98,7 +78,6 @@ class MinerWatcher extends EventEmitter {
 
     if (!isSolved) return;
 
-    // Debounce duplicate lines
     if (this.lastSolvedLine === trimmed) return;
     this.lastSolvedLine = trimmed;
 
@@ -107,27 +86,10 @@ class MinerWatcher extends EventEmitter {
 
   stop() {
     try {
-      if (this.watcher) {
-        this.watcher.close();
-        this.watcher = null;
-      }
+      this.watcher?.close();
+      this.rl?.close();
+      this.stream?.close();
     } catch (_) {}
-
-    try {
-      if (this.rl) {
-        this.rl.close();
-        this.rl = null;
-      }
-    } catch (_) {}
-
-    try {
-      if (this.stream) {
-        this.stream.close();
-        this.stream = null;
-      }
-    } catch (_) {}
-
-    this.started = false;
   }
 }
 
