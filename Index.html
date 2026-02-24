@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BLSR Miner - Singularity Wallpaper (Web Version)</title>
+<title>BLSR Miner — Singularity Engine</title>
 
 <style>
 /* --- Base Styling --- */
@@ -36,7 +36,6 @@ html, body {
   backdrop-filter: blur(4px);
   display: flex; justify-content: center; align-items: center;
   will-change: transform, opacity;
-  transition: transform 0.15s linear;
 }
 
 .bubble img {
@@ -125,18 +124,78 @@ button:hover { transform: scale(1.05); }
 
 <div id="miner-ui">
   <h1 style="color:#f7931a;">BitcoinSolar (BLSR)</h1>
-  <h2>Worker: ASIC-Rig-01</h2>
-  <p>Hashrate: 145 TH/s</p>
-  <p id="miner-status" style="color:#4ade80;">Status: Searching for blocks...</p>
+  <p id="wallet">Wallet: Not connected</p>
+  <p id="difficulty">Difficulty: loading…</p>
+  <p id="miner-status" style="color:#4ade80;">Status: Idle</p>
   <p id="last-tx" style="font-size:0.8rem;color:#9ca3af;">Last TX: none</p>
-  <button id="test-block-btn">[TEST] Simulate Block Solved</button>
+  <button id="connect-btn">Connect Wallet</button>
+  <button id="mine-btn" disabled>Start Mining</button>
 </div>
 
 <audio id="blackhole-sfx" src="sounds/blackhole_woosh.mp3" preload="auto"></audio>
 
 <script>
-/* --- JavaScript identical to Electron version (minus IPC) --- */
-/* (Same bubble physics, black hole event, particles, gravity wave, etc.) */
+/* ---------------------------------------------------------
+   META MASK + BACKEND INTEGRATION
+--------------------------------------------------------- */
+
+let userAddress = null;
+
+async function connectWallet() {
+  if (!window.ethereum) {
+    alert("MetaMask not detected");
+    return;
+  }
+
+  const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+  userAddress = accounts[0];
+
+  document.getElementById("wallet").textContent =
+    "Wallet: " + userAddress.slice(0,6) + "..." + userAddress.slice(-4);
+
+  document.getElementById("mine-btn").disabled = false;
+}
+
+document.getElementById("connect-btn").onclick = connectWallet;
+
+async function startMining() {
+  if (!userAddress) return;
+
+  minerStatus.textContent = "Submitting mining request…";
+
+  const res = await fetch("/mine", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ address: userAddress })
+  });
+
+  const data = await res.json();
+
+  if (data.status === "submitted") {
+    minerStatus.textContent = "Mining… waiting for block confirmation";
+    onBlockSolved("Mining TX submitted");
+  }
+}
+
+document.getElementById("mine-btn").onclick = startMining;
+
+/* ---------------------------------------------------------
+   LIVE DIFFICULTY POLLING
+--------------------------------------------------------- */
+
+async function updateDifficulty() {
+  const res = await fetch("/get_difficulty");
+  const data = await res.json();
+  document.getElementById("difficulty").textContent =
+    "Difficulty: " + data.difficulty;
+}
+
+setInterval(updateDifficulty, 5000);
+updateDifficulty();
+
+/* ---------------------------------------------------------
+   SINGULARITY ANIMATION ENGINE (unchanged, optimized)
+--------------------------------------------------------- */
 
 const wallpaper = document.getElementById('wallpaper');
 const bubbleCount = 25;
@@ -292,11 +351,11 @@ function onBlockSolved(text){
     bubbles.forEach(b=>{ if(b.type!=="blsr") b.el.remove(); });
     bubbles=bubbles.filter(b=>b.type==="blsr");
 
-    singularity.el.classList.remove("singularity");
-    singularity=null;
-
     const respawn=bubbleCount-bubbles.length;
     for(let i=0;i<respawn;i++) createBubble();
+
+    singularity.el.classList.remove("singularity");
+    singularity=null;
 
     isBlackHoleActive=false;
   },2200);
@@ -306,10 +365,6 @@ function init(){
   for(let i=0;i<bubbleCount;i++) createBubble();
   requestAnimationFrame(animateBubbles);
 }
-
-document.getElementById("test-block-btn").addEventListener("click",()=>{
-  onBlockSolved("TEST BLOCK: Simulated event");
-});
 
 init();
 </script>
