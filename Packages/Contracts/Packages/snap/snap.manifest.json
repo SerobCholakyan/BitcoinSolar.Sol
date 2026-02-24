@@ -1,0 +1,40 @@
+{
+  "version": "1.0.0",
+  "manifestVersion": "0.1",
+  "description": "Monitor, calculate, and harvest your BitcoinSolar (BLSR) solar-yield rewards directly inside MetaMask.",
+  "proposedName": "BitcoinSolar Monitor",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SerobCholakyan/BitcoinSolar"
+  },
+  "source": {
+    "shasum": "REPLACE_WITH_REAL_SHASUM_BEFORE_PUBLISHING",
+    "location": {
+      "npm": {
+        "packageName": "bitcoin-solar-snap"
+      }
+    }
+  },
+  "initialPermissions": {
+    "endowment:network-access": {},
+    "endowment:transaction-insight": {},
+    "endowment:rpc": {
+      "dapps": true
+    },
+    "endowment:cronjob": {
+      "jobs": [
+        {
+          "expression": "*/10 * * * *",
+          "request": {
+            "method": "blsr_checkYield"
+          }
+        }
+      ]
+    },
+    "snap_dialog": {}
+  },
+  "author": {
+    "name": "BitcoinSolar",
+    "website": "https://bitcoinsolar.org"
+  }
+}
