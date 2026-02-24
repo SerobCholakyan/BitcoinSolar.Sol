@@ -116,4 +116,6 @@ export const harvestSolar = async () => {
     return result;
   } catch (err) {
     console.error('Snap harvest failed:', err);
-    throw new Error
+    throw new Error('Unable to harvest yield via BitcoinSolar Snap.');
+  }
+};
