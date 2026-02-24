@@ -21,7 +21,7 @@ const RPC_URLS = [
   "https://polygon-bor.publicnode.com",
 ].filter(Boolean);
 
-const PRIVATE_KEY = process.env.BLSR_PRIVATE_KEY || "0xYOUR_PRIVATE_KEY"; // DO NOT SHIP REAL KEY
+const PRIVATE_KEY = process.env.BLSR_PRIVATE_KEY || "0xYOUR_PRIVATE_KEY";
 const CONTRACT_ADDRESS =
   process.env.BLSR_CONTRACT_ADDRESS || "0xYOUR_BLSR_CONTRACT";
 
@@ -129,7 +129,6 @@ async function setupMinerIntegration() {
     rpcUrl,
   });
 
-  // ---- Block Solved Event ----
   watcher.on("blockSolved", async (logLine) => {
     console.log("Block solved detected:", logLine);
 
@@ -157,7 +156,6 @@ async function setupMinerIntegration() {
     }
   });
 
-  // ---- Watcher Errors ----
   watcher.on("error", (err) => {
     console.error("Watcher error:", err);
     sendToRenderer("miner:error", {
