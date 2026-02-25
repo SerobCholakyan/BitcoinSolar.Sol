@@ -14,7 +14,6 @@ class MinerWatcher extends EventEmitter {
     this.rl = null;
     this.watcher = null;
     this.lastSolvedLine = null;
-
     this._init();
   }
 
@@ -37,12 +36,12 @@ class MinerWatcher extends EventEmitter {
   _startTail() {
     this.stream = fs.createReadStream(this.logPath, {
       encoding: "utf8",
-      flags: "r",
+      flags: "r"
     });
 
     this.rl = readline.createInterface({
       input: this.stream,
-      crlfDelay: Infinity,
+      crlfDelay: Infinity
     });
 
     this.rl.on("line", (line) => this._handleLine(line));
@@ -61,8 +60,9 @@ class MinerWatcher extends EventEmitter {
     try {
       this.stream?.close();
       this.rl?.close();
-    } catch (_) {}
-
+    } catch (_) {
+      // ignore
+    }
     this._startTail();
   }
 
@@ -77,10 +77,9 @@ class MinerWatcher extends EventEmitter {
       lower.includes("share accepted");
 
     if (!isSolved) return;
-
     if (this.lastSolvedLine === trimmed) return;
-    this.lastSolvedLine = trimmed;
 
+    this.lastSolvedLine = trimmed;
     this.emit("blockSolved", trimmed);
   }
 
@@ -89,7 +88,9 @@ class MinerWatcher extends EventEmitter {
       this.watcher?.close();
       this.rl?.close();
       this.stream?.close();
-    } catch (_) {}
+    } catch (_) {
+      // ignore
+    }
   }
 }
 
