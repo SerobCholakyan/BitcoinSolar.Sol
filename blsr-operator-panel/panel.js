@@ -1,4 +1,4 @@
-const API = "https://api.bitcoinsolar.org"; // adjust if different
+const API = "https://api.bitcoinsolar.org";
 
 async function loadMiners() {
   const res = await fetch(`${API}/metrics`);
