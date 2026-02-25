@@ -16,9 +16,7 @@ contextBridge.exposeInMainWorld("minerAPI", {
   onSolved: (callback) => on("miner:solved", callback),
   onStatus: (callback) => on("miner:status", callback),
   onError: (callback) => on("miner:error", callback),
-
   getStatus: () => invoke("miner:get-status"),
-
   removeAllListeners: (channel) => {
     ipcRenderer.removeAllListeners(channel);
   }
