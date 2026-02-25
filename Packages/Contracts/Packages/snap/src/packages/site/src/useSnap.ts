@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   connectSnap,
   isSnapInstalled,
@@ -60,6 +60,10 @@ export function useSnap() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    void checkInstalled();
+  }, [checkInstalled]);
 
   return {
     installed,
