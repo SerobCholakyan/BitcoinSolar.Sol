@@ -37,12 +37,12 @@ class BLSRMinter {
       this.abi,
       this.wallet
     );
-
-    console.log("[BLSRMinter] Initialized with RPC:", this.rpcUrl);
   }
 
   /**
    * Mint reward based on a solved block log line.
+   * You can customize how logLine is parsed and passed.
+   *
    * Strategy:
    * - If contract has `mintReward(string)` → call that
    * - Else if contract has `mine(bytes32)` → hash logLine and call that
@@ -63,13 +63,11 @@ class BLSRMinter {
     let tx;
 
     if (hasMintReward) {
-      console.log("[BLSRMinter] Calling mintReward(logLine)");
       tx = await this._sendWithRetry(() =>
         this.contract.mintReward(logLine)
       );
     } else if (hasMine) {
       const nonceBytes = ethers.id(logLine); // keccak256(logLine)
-      console.log("[BLSRMinter] Calling mine(bytes32) with hash:", nonceBytes);
       tx = await this._sendWithRetry(() =>
         this.contract.mine(nonceBytes)
       );
@@ -80,8 +78,6 @@ class BLSRMinter {
     }
 
     const receipt = await tx.wait();
-    console.log("[BLSRMinter] Mint transaction confirmed:", receipt.transactionHash);
-
     return receipt;
   }
 
@@ -91,13 +87,12 @@ class BLSRMinter {
     for (let i = 0; i < maxRetries; i++) {
       try {
         const tx = await fn();
-        console.log(`[BLSRMinter] Transaction sent (attempt ${i + 1})`);
         return tx;
       } catch (err) {
         lastError = err;
         console.error(
           `[BLSRMinter] tx attempt ${i + 1} failed:`,
-          err.message || err
+          err
         );
         await new Promise((res) =>
           setTimeout(res, 1500 * (i + 1))
@@ -109,10 +104,10 @@ class BLSRMinter {
   }
 
   async shutdown() {
+    // Placeholder for future cleanup if needed
     this.provider = null;
     this.wallet = null;
     this.contract = null;
-    console.log("[BLSRMinter] Shutdown complete.");
   }
 }
 
