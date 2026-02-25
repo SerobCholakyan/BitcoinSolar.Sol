@@ -2,6 +2,8 @@ import os
 import time
 import secrets
 import threading
+import sqlite3
+import hashlib
 from dataclasses import dataclass, field
 from typing import Dict
 
@@ -10,9 +12,12 @@ from flask_cors import CORS
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from dotenv import load_dotenv
-import hashlib
-
-from prometheus_client import Counter, Gauge, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import (
+    Counter,
+    Gauge,
+    generate_latest,
+    CONTENT_TYPE_LATEST,
+)
 
 load_dotenv()
 
@@ -51,6 +56,33 @@ contract = (
     else None
 )
 
+# --- DB setup ---
+DB_PATH = "database.db"
+
+
+def db():
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
+
+
+def init_db():
+    conn = db()
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS payouts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            address TEXT NOT NULL,
+            amount TEXT NOT NULL,
+            tx_hash TEXT,
+            timestamp INTEGER
+        )
+        """
+    )
+    conn.commit()
+    conn.close()
+
+
+init_db()
+
 
 @dataclass
 class Job:
@@ -61,18 +93,42 @@ class Job:
 
 
 jobs: Dict[str, Job] = {}
+_seen_miners = set()
 
 # --- Prometheus metrics ---
+
+# Global jobs / shares
 BLSR_JOBS_ISSUED = Counter("blsr_jobs_issued_total", "Total mining jobs issued")
 BLSR_SHARES_SUBMITTED = Counter(
     "blsr_shares_submitted_total", "Total shares submitted", ["result"]
 )
+
+# Per-miner shares + last share
+BLSR_MINER_SHARES = Counter(
+    "blsr_miner_shares_total",
+    "Shares submitted per miner",
+    ["address", "result"],
+)
+BLSR_MINER_LAST_SHARE = Gauge(
+    "blsr_miner_last_share_ts",
+    "Unix timestamp of last share per miner",
+    ["address"],
+)
+
+# Miner count
 BLSR_MINERS = Gauge("blsr_miners_connected", "Number of distinct miners seen")
+
+# Payouts
+BLSR_PAYOUTS = Counter(
+    "blsr_payouts_total",
+    "Total payouts sent",
+    ["address"],
+)
+
+# Last executeMining tx time
 BLSR_LAST_EXEC_TX = Gauge(
     "blsr_last_execute_mining_ts", "Unix timestamp of last executeMining tx"
 )
-
-_seen_miners = set()
 
 
 def new_job() -> Job:
@@ -104,6 +160,17 @@ def verify_share(job: Job, nonce_hex: str, hash_hex: str) -> bool:
     return real_hash <= job.target
 
 
+def record_payout(address: str, amount: str, tx_hash_hex: str):
+    conn = db()
+    conn.execute(
+        "INSERT INTO payouts (address, amount, tx_hash, timestamp) VALUES (?, ?, ?, ?)",
+        (address, amount, tx_hash_hex, int(time.time())),
+    )
+    conn.commit()
+    conn.close()
+    BLSR_PAYOUTS.labels(address=address).inc()
+
+
 def credit_miner(address: str):
     global _seen_miners
     if address not in _seen_miners:
@@ -118,6 +185,9 @@ def credit_miner(address: str):
     def _tx():
         try:
             acct = w3.eth.account.from_key(PRIVATE_KEY)
+            # For now, assume 1 unit payout per valid share (you can change this)
+            amount = "1"
+
             tx = contract.functions.executeMining(address).build_transaction(
                 {
                     "from": acct.address,
@@ -129,8 +199,11 @@ def credit_miner(address: str):
             tx["gas"] = gas_est
             signed = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
             tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-            print(f"[BACKEND] executeMining sent: {tx_hash.hex()}")
+            tx_hash_hex = tx_hash.hex()
+            print(f"[BACKEND] executeMining sent: {tx_hash_hex}")
             BLSR_LAST_EXEC_TX.set(time.time())
+
+            record_payout(address, amount, tx_hash_hex)
         except Exception as e:
             print(f"[BACKEND] executeMining failed: {e}")
 
@@ -159,18 +232,26 @@ def submit_share():
 
     if not job_id or not address or not nonce or not hash_hex:
         BLSR_SHARES_SUBMITTED.labels(result="invalid").inc()
+        if address:
+            BLSR_MINER_SHARES.labels(address=address, result="invalid").inc()
         return jsonify({"status": "error", "message": "Missing fields"}), 400
 
     job = jobs.get(job_id)
     if not job:
         BLSR_SHARES_SUBMITTED.labels(result="invalid").inc()
+        BLSR_MINER_SHARES.labels(address=address, result="invalid").inc()
         return jsonify({"status": "error", "message": "Unknown job"}), 400
 
     if not verify_share(job, nonce, hash_hex):
         BLSR_SHARES_SUBMITTED.labels(result="invalid").inc()
+        BLSR_MINER_SHARES.labels(address=address, result="invalid").inc()
         return jsonify({"status": "error", "message": "Invalid share"}), 400
 
+    # Valid share
     BLSR_SHARES_SUBMITTED.labels(result="valid").inc()
+    BLSR_MINER_SHARES.labels(address=address, result="valid").inc()
+    BLSR_MINER_LAST_SHARE.labels(address=address).set(time.time())
+
     credit_miner(address)
     return jsonify({"status": "ok", "message": "Share accepted"})
 
@@ -191,6 +272,27 @@ def stats():
             "total_mined": str(total_mined) if total_mined is not None else None,
             "miners": len(_seen_miners),
         }
+    )
+
+
+@app.route("/payouts/<address>", methods=["GET"])
+def get_payouts(address):
+    conn = db()
+    rows = conn.execute(
+        "SELECT amount, tx_hash, timestamp FROM payouts WHERE address = ? ORDER BY timestamp DESC",
+        (address,),
+    ).fetchall()
+    conn.close()
+
+    return jsonify(
+        [
+            {
+                "amount": r[0],
+                "tx_hash": r[1],
+                "timestamp": r[2],
+            }
+            for r in rows
+        ]
     )
 
 
