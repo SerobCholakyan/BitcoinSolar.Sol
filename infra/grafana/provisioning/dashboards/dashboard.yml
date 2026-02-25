@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+  - name: 'BLSR Dashboards'
+    orgId: 1
+    folder: 'BLSR'
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards
