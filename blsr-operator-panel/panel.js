@@ -9,23 +9,29 @@ async function loadMiners() {
   text.split("\n").forEach((line) => {
     if (line.startsWith("blsr_miner_shares_total")) {
       const match = line.match(
-        /blsr_miner_shares_total\{address="([^"]+)",result="([^"]+)"\} (\d+(?:\.\d+)?)/
+        /blsr_miner_shares_total\{address="([^"]+)",worker="([^"]+)",result="([^"]+)"\} (\d+(?:\.\d+)?)/
       );
       if (match) {
-        const [, address, result, count] = match;
-        if (!miners[address]) miners[address] = { valid: 0, invalid: 0, last: null };
-        miners[address][result] = Number(count);
+        const [, address, worker, result, count] = match;
+        const key = `${address}::${worker}`;
+        if (!miners[key]) {
+          miners[key] = { address, worker, valid: 0, invalid: 0, last: null };
+        }
+        miners[key][result] = Number(count);
       }
     }
 
     if (line.startsWith("blsr_miner_last_share_ts")) {
       const match = line.match(
-        /blsr_miner_last_share_ts\{address="([^"]+)"\} (\d+(?:\.\d+)?)/
+        /blsr_miner_last_share_ts\{address="([^"]+)",worker="([^"]+)"\} (\d+(?:\.\d+)?)/
       );
       if (match) {
-        const [, address, ts] = match;
-        if (!miners[address]) miners[address] = { valid: 0, invalid: 0, last: null };
-        miners[address].last = new Date(Number(ts) * 1000).toLocaleString();
+        const [, address, worker, ts] = match;
+        const key = `${address}::${worker}`;
+        if (!miners[key]) {
+          miners[key] = { address, worker, valid: 0, invalid: 0, last: null };
+        }
+        miners[key].last = new Date(Number(ts) * 1000).toLocaleString();
       }
     }
   });
@@ -33,13 +39,14 @@ async function loadMiners() {
   const tbody = document.querySelector("#miners-table tbody");
   tbody.innerHTML = "";
 
-  Object.entries(miners).forEach(([address, stats]) => {
+  Object.values(miners).forEach((m) => {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${address}</td>
-      <td>${stats.valid}</td>
-      <td>${stats.invalid}</td>
-      <td>${stats.last || "-"}</td>
+      <td>${m.address}</td>
+      <td>${m.worker}</td>
+      <td>${m.valid}</td>
+      <td>${m.invalid}</td>
+      <td>${m.last || "-"}</td>
     `;
     tbody.appendChild(row);
   });
@@ -62,6 +69,7 @@ async function loadPayouts() {
   payouts.forEach((p) => {
     const row = document.createElement("tr");
     row.innerHTML = `
+      <td>${p.worker || "-"}</td>
       <td>${p.amount}</td>
       <td>${p.tx_hash}</td>
       <td>${new Date(p.timestamp * 1000).toLocaleString()}</td>
