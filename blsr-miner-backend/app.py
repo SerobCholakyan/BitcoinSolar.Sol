@@ -19,12 +19,15 @@ from prometheus_client import (
     CONTENT_TYPE_LATEST,
 )
 
+# ---------------------------------------------------------
+#  INITIALIZATION
+# ---------------------------------------------------------
+
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-# --- Blockchain config ---
 RPC_URL = os.getenv("POLYGON_RPC", "")
 CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
@@ -56,7 +59,10 @@ contract = (
     else None
 )
 
-# --- DB setup ---
+# ---------------------------------------------------------
+#  DATABASE
+# ---------------------------------------------------------
+
 DB_PATH = "database.db"
 
 
@@ -83,6 +89,9 @@ def init_db():
 
 init_db()
 
+# ---------------------------------------------------------
+#  JOB STRUCTURE
+# ---------------------------------------------------------
 
 @dataclass
 class Job:
@@ -95,41 +104,43 @@ class Job:
 jobs: Dict[str, Job] = {}
 _seen_miners = set()
 
-# --- Prometheus metrics ---
+# ---------------------------------------------------------
+#  PROMETHEUS METRICS
+# ---------------------------------------------------------
 
-# Global jobs / shares
 BLSR_JOBS_ISSUED = Counter("blsr_jobs_issued_total", "Total mining jobs issued")
+
 BLSR_SHARES_SUBMITTED = Counter(
     "blsr_shares_submitted_total", "Total shares submitted", ["result"]
 )
 
-# Per-miner shares + last share
 BLSR_MINER_SHARES = Counter(
     "blsr_miner_shares_total",
     "Shares submitted per miner",
     ["address", "result"],
 )
+
 BLSR_MINER_LAST_SHARE = Gauge(
     "blsr_miner_last_share_ts",
     "Unix timestamp of last share per miner",
     ["address"],
 )
 
-# Miner count
 BLSR_MINERS = Gauge("blsr_miners_connected", "Number of distinct miners seen")
 
-# Payouts
 BLSR_PAYOUTS = Counter(
     "blsr_payouts_total",
     "Total payouts sent",
     ["address"],
 )
 
-# Last executeMining tx time
 BLSR_LAST_EXEC_TX = Gauge(
     "blsr_last_execute_mining_ts", "Unix timestamp of last executeMining tx"
 )
 
+# ---------------------------------------------------------
+#  JOB GENERATION
+# ---------------------------------------------------------
 
 def new_job() -> Job:
     job_id = secrets.token_hex(8)
@@ -141,6 +152,9 @@ def new_job() -> Job:
     BLSR_JOBS_ISSUED.inc()
     return job
 
+# ---------------------------------------------------------
+#  SHARE VERIFICATION
+# ---------------------------------------------------------
 
 def verify_share(job: Job, nonce_hex: str, hash_hex: str) -> bool:
     try:
@@ -159,6 +173,9 @@ def verify_share(job: Job, nonce_hex: str, hash_hex: str) -> bool:
 
     return real_hash <= job.target
 
+# ---------------------------------------------------------
+#  PAYOUT RECORDING
+# ---------------------------------------------------------
 
 def record_payout(address: str, amount: str, tx_hash_hex: str):
     conn = db()
@@ -170,6 +187,9 @@ def record_payout(address: str, amount: str, tx_hash_hex: str):
     conn.close()
     BLSR_PAYOUTS.labels(address=address).inc()
 
+# ---------------------------------------------------------
+#  CREDIT MINER
+# ---------------------------------------------------------
 
 def credit_miner(address: str):
     global _seen_miners
@@ -177,15 +197,13 @@ def credit_miner(address: str):
         _seen_miners.add(address)
         BLSR_MINERS.set(len(_seen_miners))
 
-    print(f"[BACKEND] Valid share credited to {address}")
-
     if not (w3 and contract and PRIVATE_KEY):
+        print("[BACKEND] No blockchain connection; skipping payout.")
         return
 
     def _tx():
         try:
             acct = w3.eth.account.from_key(PRIVATE_KEY)
-            # For now, assume 1 unit payout per valid share (you can change this)
             amount = "1"
 
             tx = contract.functions.executeMining(address).build_transaction(
@@ -195,20 +213,25 @@ def credit_miner(address: str):
                     "gasPrice": w3.eth.gas_price,
                 }
             )
-            gas_est = w3.eth.estimate_gas(tx)
-            tx["gas"] = gas_est
+            tx["gas"] = w3.eth.estimate_gas(tx)
+
             signed = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
             tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
             tx_hash_hex = tx_hash.hex()
+
             print(f"[BACKEND] executeMining sent: {tx_hash_hex}")
             BLSR_LAST_EXEC_TX.set(time.time())
 
             record_payout(address, amount, tx_hash_hex)
+
         except Exception as e:
             print(f"[BACKEND] executeMining failed: {e}")
 
     threading.Thread(target=_tx, daemon=True).start()
 
+# ---------------------------------------------------------
+#  API ROUTES
+# ---------------------------------------------------------
 
 @app.route("/work", methods=["GET"])
 def get_work():
@@ -220,7 +243,6 @@ def get_work():
             "target": job.target.hex(),
         }
     )
-
 
 @app.route("/share", methods=["POST"])
 def submit_share():
@@ -247,14 +269,12 @@ def submit_share():
         BLSR_MINER_SHARES.labels(address=address, result="invalid").inc()
         return jsonify({"status": "error", "message": "Invalid share"}), 400
 
-    # Valid share
     BLSR_SHARES_SUBMITTED.labels(result="valid").inc()
     BLSR_MINER_SHARES.labels(address=address, result="valid").inc()
     BLSR_MINER_LAST_SHARE.labels(address=address).set(time.time())
 
     credit_miner(address)
     return jsonify({"status": "ok", "message": "Share accepted"})
-
 
 @app.route("/stats", methods=["GET"])
 def stats():
@@ -273,7 +293,6 @@ def stats():
             "miners": len(_seen_miners),
         }
     )
-
 
 @app.route("/payouts/<address>", methods=["GET"])
 def get_payouts(address):
@@ -295,11 +314,13 @@ def get_payouts(address):
         ]
     )
 
-
 @app.route("/metrics", methods=["GET"])
 def metrics():
     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
+# ---------------------------------------------------------
+#  MAIN
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
