@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BLSR Operator Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="top-bar">
+    <div class="logo">BLSR OPERATOR</div>
+  </header>
+
+  <main class="grid">
+    <section class="panel">
+      <h2>Miners</h2>
+      <table id="miners-table">
+        <thead>
+          <tr>
+            <th>Address</th>
+            <th>Valid Shares</th>
+            <th>Invalid Shares</th>
+            <th>Last Share</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>Payouts</h2>
+      <div class="payout-input">
+        <input id="payout-address" placeholder="Miner address (0x...)" />
+        <button id="load-payouts">Load</button>
+      </div>
+      <table id="payouts-table">
+        <thead>
+          <tr>
+            <th>Amount</th>
+            <th>Tx Hash</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="panel.js"></script>
+</body>
+</html>
