@@ -1,3 +1,4 @@
 cd infra/grafana
 docker compose up -d
 
+Grafana at http://<server-ip>:3000 (default login: admin / admin).
