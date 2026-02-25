@@ -1,4 +1,4 @@
-// main.js
+// blsr-mint.js
 // BLSR Miner — Singularity Engine Host (Electron Shell)
 
 const { app, BrowserWindow, ipcMain } = require("electron");
@@ -140,12 +140,17 @@ async function setupMinerIntegration() {
     });
 
     try {
+      // Updated: uses the improved mintReward logic from the new blsr-mint.js
       const receipt = await minter.mintReward(logLine);
+
       sendToRenderer("miner:solved", {
         status: "minted",
         log: logLine,
         tx: receipt?.transactionHash || null
       });
+
+      console.log("[MAIN] Mint confirmed:", receipt?.transactionHash);
+
     } catch (err) {
       console.error("Mint error:", err);
       sendToRenderer("miner:error", {
