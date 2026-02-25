@@ -45,7 +45,7 @@ const BLSR_ABI = [
 
   // Events
   'event Transfer(address indexed from, address indexed to, uint256 value)',
-  'event Approval(address indexed owner, address indexed spender, uint256 value)',
+  'event Approval(address indexed owner, address indexed spender, uint256 value)'
 ];
 
 const provider = new ethers.JsonRpcProvider(RPC_URL);
