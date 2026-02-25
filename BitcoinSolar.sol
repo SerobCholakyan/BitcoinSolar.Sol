@@ -2,12 +2,12 @@
 pragma solidity ^0.8.20;
 
 /*
- *  BitcoinSolar (BLSR)
- *  --------------------
- *  • 21,000,000 max supply
- *  • 10% minted to deployer at launch (2.1M)
- *  • Remaining 90% minted through backend-controlled mining rewards
- *  • Uses OpenZeppelin 5.x (ERC20 + ERC20Capped + Ownable)
+ * BitcoinSolar (BLSR)
+ * --------------------
+ * • 21,000,000 max supply
+ * • 10% minted to deployer at launch (2.1M)
+ * • Remaining 90% minted through backend-controlled mining rewards
+ * • Uses OpenZeppelin 5.x (ERC20 + ERC20Capped + Ownable)
  */
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -35,10 +35,7 @@ contract BitcoinSolar is ERC20, ERC20Capped, Ownable {
      * @param miner Address receiving the reward
      * @param amount Reward amount (in wei)
      */
-    function mintMiningReward(address miner, uint256 amount)
-        external
-        onlyOwner
-    {
+    function mintMiningReward(address miner, uint256 amount) external onlyOwner {
         require(miner != address(0), "BLSR: invalid miner address");
         require(amount > 0, "BLSR: amount must be > 0");
         require(
