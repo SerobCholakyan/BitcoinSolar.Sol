@@ -5,12 +5,14 @@ import threading
 from dataclasses import dataclass, field
 from typing import Dict
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from dotenv import load_dotenv
 import hashlib
+
+from prometheus_client import Counter, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
 load_dotenv()
 
@@ -26,7 +28,6 @@ w3 = Web3(Web3.HTTPProvider(RPC_URL)) if RPC_URL else None
 if w3:
     w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-# Minimal ABI stub – replace with your real BitcoinSolar ABI
 CONTRACT_ABI = [
     {
         "inputs": [{"internalType": "address", "name": "miner", "type": "address"}],
@@ -61,16 +62,27 @@ class Job:
 
 jobs: Dict[str, Job] = {}
 
+# --- Prometheus metrics ---
+BLSR_JOBS_ISSUED = Counter("blsr_jobs_issued_total", "Total mining jobs issued")
+BLSR_SHARES_SUBMITTED = Counter(
+    "blsr_shares_submitted_total", "Total shares submitted", ["result"]
+)
+BLSR_MINERS = Gauge("blsr_miners_connected", "Number of distinct miners seen")
+BLSR_LAST_EXEC_TX = Gauge(
+    "blsr_last_execute_mining_ts", "Unix timestamp of last executeMining tx"
+)
+
+_seen_miners = set()
+
 
 def new_job() -> Job:
     job_id = secrets.token_hex(8)
     seed = secrets.token_bytes(32)
-    # Simple difficulty: leading zeros in target
-    # Lower target => higher difficulty
     target_hex = "00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     target = bytes.fromhex(target_hex)
     job = Job(job_id=job_id, seed=seed, target=target)
     jobs[job_id] = job
+    BLSR_JOBS_ISSUED.inc()
     return job
 
 
@@ -93,16 +105,16 @@ def verify_share(job: Job, nonce_hex: str, hash_hex: str) -> bool:
 
 
 def credit_miner(address: str):
-    # This is where you can:
-    # - increment an internal DB counter
-    # - and/or call executeMining(address) on-chain
-    # For now, we just log.
+    global _seen_miners
+    if address not in _seen_miners:
+        _seen_miners.add(address)
+        BLSR_MINERS.set(len(_seen_miners))
+
     print(f"[BACKEND] Valid share credited to {address}")
 
     if not (w3 and contract and PRIVATE_KEY):
         return
 
-    # Optional: call executeMining in background
     def _tx():
         try:
             acct = w3.eth.account.from_key(PRIVATE_KEY)
@@ -110,4 +122,82 @@ def credit_miner(address: str):
                 {
                     "from": acct.address,
                     "nonce": w3.eth.get_transaction_count(acct.address, "pending"),
-                   
+                    "gasPrice": w3.eth.gas_price,
+                }
+            )
+            gas_est = w3.eth.estimate_gas(tx)
+            tx["gas"] = gas_est
+            signed = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
+            tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+            print(f"[BACKEND] executeMining sent: {tx_hash.hex()}")
+            BLSR_LAST_EXEC_TX.set(time.time())
+        except Exception as e:
+            print(f"[BACKEND] executeMining failed: {e}")
+
+    threading.Thread(target=_tx, daemon=True).start()
+
+
+@app.route("/work", methods=["GET"])
+def get_work():
+    job = new_job()
+    return jsonify(
+        {
+            "job_id": job.job_id,
+            "seed": job.seed.hex(),
+            "target": job.target.hex(),
+        }
+    )
+
+
+@app.route("/share", methods=["POST"])
+def submit_share():
+    data = request.get_json(silent=True) or {}
+    job_id = data.get("job_id")
+    address = data.get("address")
+    nonce = data.get("nonce")
+    hash_hex = data.get("hash")
+
+    if not job_id or not address or not nonce or not hash_hex:
+        BLSR_SHARES_SUBMITTED.labels(result="invalid").inc()
+        return jsonify({"status": "error", "message": "Missing fields"}), 400
+
+    job = jobs.get(job_id)
+    if not job:
+        BLSR_SHARES_SUBMITTED.labels(result="invalid").inc()
+        return jsonify({"status": "error", "message": "Unknown job"}), 400
+
+    if not verify_share(job, nonce, hash_hex):
+        BLSR_SHARES_SUBMITTED.labels(result="invalid").inc()
+        return jsonify({"status": "error", "message": "Invalid share"}), 400
+
+    BLSR_SHARES_SUBMITTED.labels(result="valid").inc()
+    credit_miner(address)
+    return jsonify({"status": "ok", "message": "Share accepted"})
+
+
+@app.route("/stats", methods=["GET"])
+def stats():
+    total_jobs = len(jobs)
+    total_mined = None
+    if contract:
+        try:
+            total_mined = contract.functions.totalMined().call()
+        except Exception:
+            total_mined = None
+
+    return jsonify(
+        {
+            "total_jobs": total_jobs,
+            "total_mined": str(total_mined) if total_mined is not None else None,
+            "miners": len(_seen_miners),
+        }
+    )
+
+
+@app.route("/metrics", methods=["GET"])
+def metrics():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
