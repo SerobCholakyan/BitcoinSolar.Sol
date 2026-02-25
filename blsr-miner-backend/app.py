@@ -19,10 +19,6 @@ from prometheus_client import (
     CONTENT_TYPE_LATEST,
 )
 
-# ---------------------------------------------------------
-#  INITIALIZATION
-# ---------------------------------------------------------
-
 load_dotenv()
 
 app = Flask(__name__)
@@ -32,7 +28,6 @@ RPC_URL = os.getenv("POLYGON_RPC", "")
 CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 
-# Optional simple API key auth for miners (comma-separated list)
 MINER_API_KEYS = set(
     k.strip() for k in os.getenv("MINER_API_KEYS", "").split(",") if k.strip()
 )
@@ -64,10 +59,6 @@ contract = (
     else None
 )
 
-# ---------------------------------------------------------
-#  DATABASE
-# ---------------------------------------------------------
-
 DB_PATH = "database.db"
 
 
@@ -95,9 +86,6 @@ def init_db():
 
 init_db()
 
-# ---------------------------------------------------------
-#  JOB STRUCTURE
-# ---------------------------------------------------------
 
 @dataclass
 class Job:
@@ -109,10 +97,6 @@ class Job:
 
 jobs: Dict[str, Job] = {}
 _seen_miners = set()
-
-# ---------------------------------------------------------
-#  PROMETHEUS METRICS
-# ---------------------------------------------------------
 
 BLSR_JOBS_ISSUED = Counter("blsr_jobs_issued_total", "Total mining jobs issued")
 
@@ -144,9 +128,6 @@ BLSR_LAST_EXEC_TX = Gauge(
     "blsr_last_execute_mining_ts", "Unix timestamp of last executeMining tx"
 )
 
-# ---------------------------------------------------------
-#  HELPERS
-# ---------------------------------------------------------
 
 def require_api_key():
     if not MINER_API_KEYS:
@@ -233,9 +214,6 @@ def credit_miner(address: str, worker: str):
 
     threading.Thread(target=_tx, daemon=True).start()
 
-# ---------------------------------------------------------
-#  ROUTES
-# ---------------------------------------------------------
 
 @app.route("/work", methods=["GET"])
 def get_work():
