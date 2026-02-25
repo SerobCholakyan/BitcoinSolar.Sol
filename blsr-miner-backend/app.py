@@ -32,6 +32,11 @@ RPC_URL = os.getenv("POLYGON_RPC", "")
 CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 
+# Optional simple API key auth for miners (comma-separated list)
+MINER_API_KEYS = set(
+    k.strip() for k in os.getenv("MINER_API_KEYS", "").split(",") if k.strip()
+)
+
 w3 = Web3(Web3.HTTPProvider(RPC_URL)) if RPC_URL else None
 if w3:
     w3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -77,6 +82,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS payouts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             address TEXT NOT NULL,
+            worker TEXT,
             amount TEXT NOT NULL,
             tx_hash TEXT,
             timestamp INTEGER
@@ -117,13 +123,13 @@ BLSR_SHARES_SUBMITTED = Counter(
 BLSR_MINER_SHARES = Counter(
     "blsr_miner_shares_total",
     "Shares submitted per miner",
-    ["address", "result"],
+    ["address", "worker", "result"],
 )
 
 BLSR_MINER_LAST_SHARE = Gauge(
     "blsr_miner_last_share_ts",
-    "Unix timestamp of last share per miner",
-    ["address"],
+    "Unix timestamp of last share per miner/worker",
+    ["address", "worker"],
 )
 
 BLSR_MINERS = Gauge("blsr_miners_connected", "Number of distinct miners seen")
@@ -131,7 +137,7 @@ BLSR_MINERS = Gauge("blsr_miners_connected", "Number of distinct miners seen")
 BLSR_PAYOUTS = Counter(
     "blsr_payouts_total",
     "Total payouts sent",
-    ["address"],
+    ["address", "worker"],
 )
 
 BLSR_LAST_EXEC_TX = Gauge(
@@ -139,8 +145,15 @@ BLSR_LAST_EXEC_TX = Gauge(
 )
 
 # ---------------------------------------------------------
-#  JOB GENERATION
+#  HELPERS
 # ---------------------------------------------------------
+
+def require_api_key():
+    if not MINER_API_KEYS:
+        return True
+    key = request.headers.get("X-API-Key")
+    return key in MINER_API_KEYS
+
 
 def new_job() -> Job:
     job_id = secrets.token_hex(8)
@@ -152,9 +165,6 @@ def new_job() -> Job:
     BLSR_JOBS_ISSUED.inc()
     return job
 
-# ---------------------------------------------------------
-#  SHARE VERIFICATION
-# ---------------------------------------------------------
 
 def verify_share(job: Job, nonce_hex: str, hash_hex: str) -> bool:
     try:
@@ -173,25 +183,19 @@ def verify_share(job: Job, nonce_hex: str, hash_hex: str) -> bool:
 
     return real_hash <= job.target
 
-# ---------------------------------------------------------
-#  PAYOUT RECORDING
-# ---------------------------------------------------------
 
-def record_payout(address: str, amount: str, tx_hash_hex: str):
+def record_payout(address: str, worker: str, amount: str, tx_hash_hex: str):
     conn = db()
     conn.execute(
-        "INSERT INTO payouts (address, amount, tx_hash, timestamp) VALUES (?, ?, ?, ?)",
-        (address, amount, tx_hash_hex, int(time.time())),
+        "INSERT INTO payouts (address, worker, amount, tx_hash, timestamp) VALUES (?, ?, ?, ?, ?)",
+        (address, worker, amount, tx_hash_hex, int(time.time())),
     )
     conn.commit()
     conn.close()
-    BLSR_PAYOUTS.labels(address=address).inc()
+    BLSR_PAYOUTS.labels(address=address, worker=worker).inc()
 
-# ---------------------------------------------------------
-#  CREDIT MINER
-# ---------------------------------------------------------
 
-def credit_miner(address: str):
+def credit_miner(address: str, worker: str):
     global _seen_miners
     if address not in _seen_miners:
         _seen_miners.add(address)
@@ -222,7 +226,7 @@ def credit_miner(address: str):
             print(f"[BACKEND] executeMining sent: {tx_hash_hex}")
             BLSR_LAST_EXEC_TX.set(time.time())
 
-            record_payout(address, amount, tx_hash_hex)
+            record_payout(address, worker, amount, tx_hash_hex)
 
         except Exception as e:
             print(f"[BACKEND] executeMining failed: {e}")
@@ -230,11 +234,14 @@ def credit_miner(address: str):
     threading.Thread(target=_tx, daemon=True).start()
 
 # ---------------------------------------------------------
-#  API ROUTES
+#  ROUTES
 # ---------------------------------------------------------
 
 @app.route("/work", methods=["GET"])
 def get_work():
+    if not require_api_key():
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
     job = new_job()
     return jsonify(
         {
@@ -244,37 +251,51 @@ def get_work():
         }
     )
 
+
 @app.route("/share", methods=["POST"])
 def submit_share():
+    if not require_api_key():
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
     data = request.get_json(silent=True) or {}
     job_id = data.get("job_id")
     address = data.get("address")
     nonce = data.get("nonce")
     hash_hex = data.get("hash")
+    worker = data.get("worker") or "default"
 
     if not job_id or not address or not nonce or not hash_hex:
         BLSR_SHARES_SUBMITTED.labels(result="invalid").inc()
         if address:
-            BLSR_MINER_SHARES.labels(address=address, result="invalid").inc()
+            BLSR_MINER_SHARES.labels(
+                address=address, worker=worker, result="invalid"
+            ).inc()
         return jsonify({"status": "error", "message": "Missing fields"}), 400
 
     job = jobs.get(job_id)
     if not job:
         BLSR_SHARES_SUBMITTED.labels(result="invalid").inc()
-        BLSR_MINER_SHARES.labels(address=address, result="invalid").inc()
+        BLSR_MINER_SHARES.labels(
+            address=address, worker=worker, result="invalid"
+        ).inc()
         return jsonify({"status": "error", "message": "Unknown job"}), 400
 
     if not verify_share(job, nonce, hash_hex):
         BLSR_SHARES_SUBMITTED.labels(result="invalid").inc()
-        BLSR_MINER_SHARES.labels(address=address, result="invalid").inc()
+        BLSR_MINER_SHARES.labels(
+            address=address, worker=worker, result="invalid"
+        ).inc()
         return jsonify({"status": "error", "message": "Invalid share"}), 400
 
     BLSR_SHARES_SUBMITTED.labels(result="valid").inc()
-    BLSR_MINER_SHARES.labels(address=address, result="valid").inc()
-    BLSR_MINER_LAST_SHARE.labels(address=address).set(time.time())
+    BLSR_MINER_SHARES.labels(
+        address=address, worker=worker, result="valid"
+    ).inc()
+    BLSR_MINER_LAST_SHARE.labels(address=address, worker=worker).set(time.time())
 
-    credit_miner(address)
+    credit_miner(address, worker)
     return jsonify({"status": "ok", "message": "Share accepted"})
+
 
 @app.route("/stats", methods=["GET"])
 def stats():
@@ -294,11 +315,12 @@ def stats():
         }
     )
 
+
 @app.route("/payouts/<address>", methods=["GET"])
 def get_payouts(address):
     conn = db()
     rows = conn.execute(
-        "SELECT amount, tx_hash, timestamp FROM payouts WHERE address = ? ORDER BY timestamp DESC",
+        "SELECT worker, amount, tx_hash, timestamp FROM payouts WHERE address = ? ORDER BY timestamp DESC",
         (address,),
     ).fetchall()
     conn.close()
@@ -306,21 +328,20 @@ def get_payouts(address):
     return jsonify(
         [
             {
-                "amount": r[0],
-                "tx_hash": r[1],
-                "timestamp": r[2],
+                "worker": r[0],
+                "amount": r[1],
+                "tx_hash": r[2],
+                "timestamp": r[3],
             }
             for r in rows
         ]
     )
 
+
 @app.route("/metrics", methods=["GET"])
 def metrics():
     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
-# ---------------------------------------------------------
-#  MAIN
-# ---------------------------------------------------------
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
