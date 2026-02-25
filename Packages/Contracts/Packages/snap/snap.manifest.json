@@ -31,6 +31,10 @@
         }
       ]
     },
+    "endowment:ethereum-provider": {
+      "chains": ["eip155:137"],
+      "dapps": true
+    },
     "snap_dialog": {}
   },
   "author": {
