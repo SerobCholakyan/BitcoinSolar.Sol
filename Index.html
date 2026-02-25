@@ -4,13 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BLSR Miner — Singularity Engine</title>
-
-  <!-- Ethers v6 UMD -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
-
   <style>
-    /* (same CSS as your MinerDashboard, unchanged for brevity) */
-    /* --- Base Styling --- */
     html, body {
       margin: 0;
       padding: 0;
@@ -21,39 +16,14 @@
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       color: #f9fafb;
     }
-    * { box-sizing: border-box; }
-    /* ... all the styles from your MinerDashboard.js exactly as-is ... */
   </style>
 </head>
 <body>
-  <!-- Wallpaper & Bubbles -->
-  <div id="wallpaper"></div>
-
-  <!-- Singularity Core -->
-  <div id="singularity-core">
-    <div class="core-orbit">
-      <div class="core-ring"></div>
-      <div class="core-orbit-line"></div>
-      <div class="core-orbit-line"></div>
-      <div class="core-orbit-line"></div>
-      <div class="core-pulse"></div>
-      <!-- Fragments will be injected via JS -->
-    </div>
+  <div id="app-root">
+    <!-- You can mount your MinerDashboard / MinerPage UI here -->
+    <h1 style="text-align:center;margin-top:40vh;letter-spacing:0.2em;color:#f7931a;">
+      BLSR MINER
+    </h1>
   </div>
-
-  <!-- UI Shell -->
-  <!-- (same DOM structure as your MinerDashboard.js) -->
-  <!-- ... full HTML from MinerDashboard.js body, unchanged ... -->
-
-  <div class="collapse-flash" id="collapse-flash"></div>
-
-  <script>
-    // (same JS logic from your MinerDashboard.js, with one tweak:)
-    // MINING_BACKEND_URL should hit your Flask backend
-    const MINING_BACKEND_URL = "http://localhost:8080/mine";
-
-    // rest of the script exactly as in MinerDashboard.js
-    // including connectWallet, startMining, stopMining, visuals, etc.
-  </script>
 </body>
 </html>
