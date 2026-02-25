@@ -3,6 +3,7 @@
 
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
+require("dotenv").config();
 
 const MinerWatcher = require("./miner-watcher");
 const BLSRMinter = require("./blsr-mint");
@@ -18,7 +19,7 @@ const RPC_URLS = [
   process.env.BLSR_RPC_URL,
   "https://polygon-rpc.com",
   "https://rpc-mainnet.matic.quiknode.pro",
-  "https://polygon-bor.publicnode.com",
+  "https://polygon-bor.publicnode.com"
 ].filter(Boolean);
 
 const PRIVATE_KEY = process.env.BLSR_PRIVATE_KEY || "0xYOUR_PRIVATE_KEY";
@@ -56,19 +57,18 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
-      nodeIntegration: false,
-    },
+      nodeIntegration: false
+    }
   });
 
   mainWindow.loadFile("index.html");
 
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
-
     sendToRenderer("app:ready", {
       logPath: LOG_PATH,
       rpcUrls: RPC_URLS,
-      contract: CONTRACT_ADDRESS,
+      contract: CONTRACT_ADDRESS
     });
   });
 
@@ -90,15 +90,16 @@ async function getWorkingRPC() {
           jsonrpc: "2.0",
           id: 1,
           method: "eth_blockNumber",
-          params: [],
-        }),
+          params: []
+        })
       });
-
       if (res.ok) {
         console.log("RPC OK:", url);
         return url;
       }
-    } catch (_) {}
+    } catch (_) {
+      // ignore and try next
+    }
   }
   throw new Error("No working RPC endpoint available.");
 }
@@ -115,7 +116,7 @@ async function setupMinerIntegration() {
     console.error("RPC selection failed:", err);
     sendToRenderer("miner:error", {
       type: "rpc",
-      message: "No working RPC endpoint available.",
+      message: "No working RPC endpoint available."
     });
     return;
   }
@@ -126,7 +127,7 @@ async function setupMinerIntegration() {
   sendToRenderer("miner:status", {
     status: "watching",
     logPath: LOG_PATH,
-    rpcUrl,
+    rpcUrl
   });
 
   watcher.on("blockSolved", async (logLine) => {
@@ -135,23 +136,22 @@ async function setupMinerIntegration() {
     sendToRenderer("miner:solved", {
       status: "detected",
       log: logLine,
-      tx: null,
+      tx: null
     });
 
     try {
       const receipt = await minter.mintReward(logLine);
-
       sendToRenderer("miner:solved", {
         status: "minted",
         log: logLine,
-        tx: receipt?.transactionHash || null,
+        tx: receipt?.transactionHash || null
       });
     } catch (err) {
       console.error("Mint error:", err);
       sendToRenderer("miner:error", {
         type: "mint",
         message: err?.message || String(err),
-        log: logLine,
+        log: logLine
       });
     }
   });
@@ -160,7 +160,7 @@ async function setupMinerIntegration() {
     console.error("Watcher error:", err);
     sendToRenderer("miner:error", {
       type: "watcher",
-      message: err?.message || String(err),
+      message: err?.message || String(err)
     });
   });
 }
@@ -173,7 +173,7 @@ ipcMain.handle("miner:get-status", async () => {
     logPath: LOG_PATH,
     rpcUrls: RPC_URLS,
     contract: CONTRACT_ADDRESS,
-    watching: !!watcher,
+    watching: !!watcher
   };
 });
 
@@ -199,7 +199,6 @@ app.on("before-quit", () => {
   } catch (err) {
     console.error("Error stopping watcher:", err);
   }
-
   try {
     minter?.shutdown?.();
   } catch (err) {
@@ -216,11 +215,10 @@ app.on("window-all-closed", () => {
 // ------------------------------------------------------------
 process.on("uncaughtException", (err) => {
   console.error("Uncaught exception:", err);
-
   if (isReady) {
     sendToRenderer("miner:error", {
       type: "uncaught",
-      message: err?.message || String(err),
+      message: err?.message || String(err)
     });
   }
 });
