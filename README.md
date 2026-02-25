@@ -1,182 +1,184 @@
+🌞 BitcoinSolar — BLSR Mining Ecosystem
 
+This repository contains the complete mining stack for the BitcoinSolar (BLSR) network:
 
-BitcoinSolar (BTCSOL)
+Native Miner (Rust) — performs real PoW‑style hashing and submits shares
 
-A decentralized, energy‑inspired ERC‑20 token powering the BitcoinSolar ecosystem.
+Mining Backend / Pool Server (Python) — issues work, validates shares, triggers on‑chain rewards
 
----
+Web Mining Dashboard (HTML/JS) — wallet connect, stats, mining UX
 
-🌞 Overview
+Together, these components form a fully functional, Unmineable‑style mining system designed specifically for BLSR.
 
-BitcoinSolar (BTCSOL) is an ERC‑20 token deployed on the Ethereum mainnet, designed to support a hybrid ecosystem of decentralized mining, staking, and community‑driven growth.
-This repository contains the full source code for the token contract, miner dashboard, backend services, and deployment tools.
-
-BitcoinSolar aims to merge clean‑energy concepts with blockchain incentives — creating a token that is simple, transparent, and built for long‑term scalability.
-
----
-
-🚀 Features
-
-Token
-
-• ERC‑20 standard
-• Fixed supply: 21,000,000 BTCSOL
-• Fully audited OpenZeppelin base
-• Minted to deployer at launch
-• Mainnet‑ready contract
-
-
-Ecosystem Components
-
-• Miner Dashboard (web UI)
-• Backend services (Python)
-• Electron desktop miner
-• Smart contract ABI + JS utilities
-• Docker support
-• Netlify deployment config
-
-
----
-
-📦 Repository Structure
+📁 Repository Structure
 
 BitcoinSolar.Sol/
 │
-├── contracts/                 # Solidity smart contracts
-├── packages/contracts/        # Additional contract modules + ABI
+├── blsr-native-miner/        # Rust-based native miner (real hashing)
+│   ├── Cargo.toml
+│   └── src/
+│       └── main.rs
 │
-├── blsr-miner-website/        # Frontend UI for miners
-├── website/                   # Public landing page
+├── blsr-miner-backend/       # Mining pool backend (Python + Flask)
+│   ├── app.py
+│   ├── requirements.txt
+│   └── .env.example
 │
-├── main.py                    # Backend service
-├── security.py                # Security utilities
-├── requirements.txt           # Python dependencies
-│
-├── main.js                    # Electron app entry
-├── preload.js                 # Electron preload scripts
-├── package.json               # Node/Electron config
-│
-├── docker-compose.yml         # Containerized deployment
-├── .env.example               # Environment variable template
-│
-└── README.md                  # You are here
+└── blsr-miner-website/       # Web mining dashboard (HTML + JS)
+    ├── index.html
+    ├── style.css
+    ├── api.js
+    └── app.js
 
+⚙️ 1. Native Miner (Rust)
 
----
+The native miner performs real SHA‑256 hashing work and submits valid shares to the backend.
 
-🔗 Smart Contract
+🔧 Build & Run
 
-Name: BitcoinSolar
-Symbol: BTCSOL
-Supply: 21,000,000
-Standard: ERC‑20
-Network: Ethereum Mainnet
+cd blsr-native-miner
+cargo build --release
+./target/release/blsr-native-miner --address 0xYOUR_ADDRESS --backend http://localhost:8080 --threads 4
 
-Contract Source (simplified)
+🧠 How it works
 
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+Fetches work from /work
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+Hashes seed || nonce using SHA‑256
 
-contract BitcoinSolar is ERC20 {
-    constructor() ERC20("BitcoinSolar", "BTCSOL") {
-        _mint(msg.sender, 21_000_000 * 10 ** decimals());
-    }
-}
+Compares hash to target difficulty
 
+Submits valid shares to /share
 
----
+Backend verifies and credits miner
 
-🛠️ Development
+🖥️ 2. Mining Backend (Python)
 
-Install Dependencies
+The backend acts as a mining pool server:
 
-Node / Frontend
+Issues work (/work)
 
-npm install
+Verifies shares (/share)
 
+Credits miners
 
-Python Backend
+Can call executeMining(address) on your BLSR contract
 
+🔧 Install & Run
+
+cd blsr-miner-backend
 pip install -r requirements.txt
+cp .env.example .env
+# Fill in RPC, contract address, and private key
+python app.py
 
+🔌 API Endpoints
 
----
+Endpoint
 
-🧪 Testing
+Description
 
-Use Hardhat, Foundry, or Remix to test the contract.
-Example (Hardhat):
+GET /work
 
-npx hardhat test
+Issues new mining job
 
+POST /share
 
----
+Validates submitted share
 
-🚀 Deployment
+GET /stats
 
-Deploy via Remix
+Returns basic pool stats
 
-1. Open Remix
-2. Upload BitcoinSolar.sol
-3. Select compiler 0.8.x
-4. Enable OpenZeppelin imports
-5. Deploy using MetaMask
-6. Verify on Etherscan
+🌐 3. Web Mining Dashboard
 
+A lightweight, modern dashboard for:
 
----
+Wallet connect (MetaMask)
 
-🌐 Frontend Deployment
+Viewing difficulty, jobs, mining status
 
-The miner dashboard and landing page can be deployed via:
+Triggering mining sessions
 
-• Netlify
-• Vercel
-• GitHub Pages
-• Docker containers
+Linking users to the native miner
 
+🔧 Run Locally
 
-netlify.toml is included for instant deployment.
+Just open:
 
----
+blsr-miner-website/index.html
 
-🧩 Miner Dashboard
+Or serve it:
 
-The miner UI includes:
+cd blsr-miner-website
+python3 -m http.server 3000
 
-• Wallet connection
-• Token balance display
-• Miner activity
-• Reward tracking
-• Real‑time updates
+🧠 How it works
 
+Connects to MetaMask
 
----
+Displays backend stats
 
-🛡️ Security
+Sends mining signals
 
-• Built on OpenZeppelin audited libraries
-• No owner‑controlled minting
-• No hidden functions
-• Fixed supply
-• Public, transparent codebase
+Designed to pair with the native miner
 
+🔗 End‑to‑End Flow
 
----
+Native Miner → Backend → Smart Contract → Dashboard
+
+1. Miner requests work
+
+GET /work
+
+2. Miner performs hashing
+
+SHA‑256(seed || nonce)
+
+3. Miner submits share
+
+POST /share
+
+4. Backend verifies
+
+recomputes hash
+
+checks difficulty
+
+credits miner
+
+5. Backend optionally calls
+
+executeMining(address) on-chain
+
+6. Dashboard displays stats
+
+Live mining status, difficulty, jobs, etc.
+
+🛡️ Security Notes
+
+The native miner never stores private keys
+
+Backend private key must be kept server-side only
+
+.env should never be committed
+
+All RPC and contract interactions are isolated to backend
+
+🚀 Roadmap
+
+Add persistent miner stats (SQLite/Postgres)
+
+Add worker hashrate reporting
+
+Add WebSocket live updates
+
+Add payout history
+
+Add downloadable installer for native miner
+
+Add GPU mining module (optional future)
 
 🤝 Contributing
 
-Pull requests are welcome!
-For major changes, please open an issue first to discuss what you’d like to modify.
-
----
-
-📄 License
-
-This project is licensed under the MIT License.
-
----
-
-🌞 BitcoinSolar — Powering a Brighter Blockchain
+Pull requests are welcome.For major changes, open an issue first to discuss what you’d like to modify.
