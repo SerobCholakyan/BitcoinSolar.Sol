@@ -1,57 +1,71 @@
-const LOCAL_SNAP_ID = 'local:http://localhost:8080';
+export const BLSR_SNAP_ID = 'npm:bitcoin-solar-snap';
 
-function assertMetaMask() {
-  if (typeof window === 'undefined' || !window.ethereum) {
-    throw new Error('MetaMask is required to use the BitcoinSolar Snap.');
+type SnapRpcResult = any;
+
+export async function connectSnap(): Promise<void> {
+  if (!(window as any).ethereum) {
+    throw new Error('MetaMask is not available in this browser.');
   }
-}
 
-export const connectSnap = async () => {
-  assertMetaMask();
-
-  await window.ethereum.request({
+  await (window as any).ethereum.request({
     method: 'wallet_requestSnaps',
     params: {
-      [LOCAL_SNAP_ID]: {}
+      [BLSR_SNAP_ID]: {},
     },
   });
-};
+}
 
-export const getSnap = async () => {
-  assertMetaMask();
+export async function getSnap(): Promise<any | null> {
+  if (!(window as any).ethereum) {
+    throw new Error('MetaMask is not available in this browser.');
+  }
 
-  const snaps = await window.ethereum.request({
-    method: 'wallet_getSnaps'
+  const snaps = await (window as any).ethereum.request({
+    method: 'wallet_getSnaps',
   });
 
-  return snaps?.[LOCAL_SNAP_ID] || null;
-};
+  const entries = Object.values(snaps || {}) as any[];
 
-export const isSnapInstalled = async () => {
+  return entries.find((snap: any) => snap.id === BLSR_SNAP_ID) ?? null;
+}
+
+export async function isSnapInstalled(): Promise<boolean> {
   const snap = await getSnap();
-  return Boolean(snap);
-};
+  return !!snap;
+}
 
-export const getYield = async () => {
-  assertMetaMask();
+export async function getYield(): Promise<SnapRpcResult> {
+  if (!(window as any).ethereum) {
+    throw new Error('MetaMask is not available in this browser.');
+  }
 
-  return await window.ethereum.request({
+  const result = await (window as any).ethereum.request({
     method: 'wallet_invokeSnap',
     params: {
-      snapId: LOCAL_SNAP_ID,
-      request: { method: 'blsr_checkYield' }
-    }
+      snapId: BLSR_SNAP_ID,
+      request: {
+        method: 'blsr_checkYield',
+      },
+    },
   });
-};
 
-export const harvestSolar = async () => {
-  assertMetaMask();
+  return result;
+}
 
-  return await window.ethereum.request({
+export async function harvestSolar(): Promise<SnapRpcResult> {
+  if (!(window as any).ethereum) {
+    throw new Error('MetaMask is not available in this browser.');
+  }
+
+  const result = await (window as any).ethereum.request({
     method: 'wallet_invokeSnap',
     params: {
-      snapId: LOCAL_SNAP_ID,
-      request: { method: 'blsr_harvest' }
-    }
+      snapId: BLSR_SNAP_ID,
+      request: {
+        method: 'blsr_harvest',
+      },
+    },
   });
-};
+
+  return result;
+}
