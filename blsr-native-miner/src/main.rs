@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 use std::thread;
 use std::time::Duration;
 
-/// Simple BLSR native miner
+/// BLSR Native Miner — Singularity Engine
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 struct Args {
@@ -20,6 +20,10 @@ struct Args {
     /// Number of worker threads
     #[arg(long, default_value_t = 4)]
     threads: u8,
+
+    /// Optional Lynnic black-hole wallpaper path/URL
+    #[arg(long)]
+    wallpaper: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -39,10 +43,7 @@ struct ShareRequest<'a> {
 
 fn main() {
     let args = Args::parse();
-    println!("BLSR Native Miner");
-    println!("Address: {}", args.address);
-    println!("Backend: {}", args.backend);
-    println!("Threads: {}", args.threads);
+    print_banner(&args);
 
     let client = Client::new();
 
@@ -50,17 +51,46 @@ fn main() {
         match fetch_work(&client, &args.backend) {
             Ok(work) => {
                 println!(
-                    "New job: {} seed={} target={}",
+                    "→ New job: {}  seed={}  target={}",
                     work.job_id, work.seed, work.target
                 );
                 run_job(&client, &args, work);
             }
             Err(e) => {
-                eprintln!("Failed to fetch work: {e}");
+                eprintln!("⚠ Failed to fetch work: {e}");
                 thread::sleep(Duration::from_secs(5));
             }
         }
     }
+}
+
+/// Lynnic‑style Black Hole ASCII Banner
+fn print_banner(args: &Args) {
+    println!();
+    println!("                .         ");
+    println!("           .         .    ");
+    println!("        .     *   .       ");
+    println!("           .       *      ");
+    println!("     .    ███████████    .");
+    println!("         █████████████     ");
+    println!("       ███████████████     ");
+    println!("         █████████████     ");
+    println!("     .    ███████████    .");
+    println!("           .       *      ");
+    println!("        .     *   .       ");
+    println!("           .         .    ");
+    println!("                .         ");
+    println!();
+    println!("   🌑  BLSR NATIVE MINER — SINGULARITY ENGINE");
+    println!("   -------------------------------------------");
+    println!("   Address  : {}", args.address);
+    println!("   Backend  : {}", args.backend);
+    println!("   Threads  : {}", args.threads);
+    if let Some(wp) = &args.wallpaper {
+        println!("   Wallpaper: {}", wp);
+    }
+    println!("   -------------------------------------------");
+    println!();
 }
 
 fn fetch_work(client: &Client, backend: &str) -> Result<WorkResponse, reqwest::Error> {
@@ -73,7 +103,7 @@ fn run_job(client: &Client, args: &Args, work: WorkResponse) {
     let target_bytes = match hex::decode(&work.target) {
         Ok(b) => b,
         Err(e) => {
-            eprintln!("Invalid target from server: {e}");
+            eprintln!("⚠ Invalid target from server: {e}");
             return;
         }
     };
@@ -81,7 +111,7 @@ fn run_job(client: &Client, args: &Args, work: WorkResponse) {
     let seed_bytes = match hex::decode(&work.seed) {
         Ok(b) => b,
         Err(e) => {
-            eprintln!("Invalid seed from server: {e}");
+            eprintln!("⚠ Invalid seed from server: {e}");
             return;
         }
     };
@@ -109,8 +139,9 @@ fn run_job(client: &Client, args: &Args, work: WorkResponse) {
                 if hash_vec <= target_bytes {
                     let hash_hex = hex::encode(&hash_vec);
                     let nonce_hex = hex::encode(nonce.to_le_bytes());
+
                     println!(
-                        "[Thread {thread_id}] Found share! nonce={nonce} hash={hash_hex}"
+                        "✔ [Thread {thread_id}] Share found! nonce={nonce} hash={hash_hex}"
                     );
 
                     let share = ShareRequest {
@@ -121,7 +152,7 @@ fn run_job(client: &Client, args: &Args, work: WorkResponse) {
                     };
 
                     if let Err(e) = submit_share(&client, &backend, &share) {
-                        eprintln!("[Thread {thread_id}] Failed to submit share: {e}");
+                        eprintln!("⚠ [Thread {thread_id}] Failed to submit share: {e}");
                     }
 
                     break;
@@ -146,6 +177,6 @@ fn submit_share(
 ) -> Result<(), reqwest::Error> {
     let url = format!("{backend}/share");
     let res = client.post(url).json(share).send()?.error_for_status()?;
-    println!("Share accepted: {:?}", res.text().unwrap_or_default());
+    println!("✓ Share accepted: {}", res.text().unwrap_or_default());
     Ok(())
 }
