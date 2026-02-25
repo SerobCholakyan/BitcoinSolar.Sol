@@ -6,6 +6,8 @@
     "start": "electron ."
   },
   "dependencies": {
+    "ethers": "^6.7.1",
+    "dotenv": "^16.4.5",
     "web3": "^4.13.0"
   },
   "devDependencies": {
