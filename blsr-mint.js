@@ -1,229 +1,119 @@
 // blsr-mint.js
-// BLSR Miner — Singularity Engine Host (Electron Shell)
+// Handles on-chain minting of BLSR rewards when a block is solved.
 
-const { app, BrowserWindow, ipcMain } = require("electron");
-const path = require("path");
-require("dotenv").config();
+const { ethers } = require("ethers");
 
-const MinerWatcher = require("./miner-watcher");
-const BLSRMinter = require("./blsr-mint");
-const CONTRACT_ABI = require("./blsr-abi.json");
+class BLSRMinter {
+  constructor(rpcUrl, privateKey, contractAddress, abi) {
+    this.rpcUrl = rpcUrl;
+    this.privateKey = privateKey;
+    this.contractAddress = contractAddress;
+    this.abi = abi;
 
-// ------------------------------------------------------------
-// CONFIG — All production-sensitive values should use env vars
-// ------------------------------------------------------------
-const LOG_PATH =
-  process.env.BLSR_MINER_LOG_PATH || "C:/miner/logs/miner.log";
+    this.provider = null;
+    this.wallet = null;
+    this.contract = null;
 
-const RPC_URLS = [
-  process.env.BLSR_RPC_URL,
-  "https://polygon-rpc.com",
-  "https://rpc-mainnet.matic.quiknode.pro",
-  "https://polygon-bor.publicnode.com"
-].filter(Boolean);
-
-const PRIVATE_KEY = process.env.BLSR_PRIVATE_KEY || "0xYOUR_PRIVATE_KEY";
-const CONTRACT_ADDRESS =
-  process.env.BLSR_CONTRACT_ADDRESS || "0xYOUR_BLSR_CONTRACT";
-
-let mainWindow = null;
-let watcher = null;
-let minter = null;
-let isReady = false;
-
-// ------------------------------------------------------------
-// Helper: Send IPC safely
-// ------------------------------------------------------------
-function sendToRenderer(channel, payload) {
-  if (!mainWindow || !mainWindow.webContents) return;
-  try {
-    mainWindow.webContents.send(channel, payload);
-  } catch (err) {
-    console.error(`IPC send failed (${channel}):`, err);
+    this._boot();
   }
-}
 
-// ------------------------------------------------------------
-// Create Electron Window
-// ------------------------------------------------------------
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
-    minWidth: 1024,
-    minHeight: 600,
-    backgroundColor: "#050510",
-    show: false,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false
+  _boot() {
+    if (!this.rpcUrl) {
+      throw new Error("RPC URL is required for BLSRMinter");
     }
-  });
 
-  mainWindow.loadFile("index.html");
+    if (!this.privateKey || this.privateKey === "0xYOUR_PRIVATE_KEY") {
+      console.warn("[BLSRMinter] WARNING: Using placeholder private key.");
+    }
 
-  mainWindow.once("ready-to-show", () => {
-    mainWindow.show();
-    sendToRenderer("app:ready", {
-      logPath: LOG_PATH,
-      rpcUrls: RPC_URLS,
-      contract: CONTRACT_ADDRESS
-    });
-  });
+    if (!this.contractAddress || this.contractAddress === "0xYOUR_BLSR_CONTRACT") {
+      console.warn("[BLSRMinter] WARNING: Using placeholder contract address.");
+    }
 
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-  });
-}
+    this.provider = new ethers.JsonRpcProvider(this.rpcUrl);
+    this.wallet = new ethers.Wallet(this.privateKey, this.provider);
+    this.contract = new ethers.Contract(
+      this.contractAddress,
+      this.abi,
+      this.wallet
+    );
 
-// ------------------------------------------------------------
-// RPC Fallback Logic
-// ------------------------------------------------------------
-async function getWorkingRPC() {
-  for (const url of RPC_URLS) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "eth_blockNumber",
-          params: []
-        })
-      });
-      if (res.ok) {
-        console.log("RPC OK:", url);
-        return url;
+    console.log("[BLSRMinter] Initialized with RPC:", this.rpcUrl);
+  }
+
+  /**
+   * Mint reward based on a solved block log line.
+   * Strategy:
+   * - If contract has `mintReward(string)` → call that
+   * - Else if contract has `mine(bytes32)` → hash logLine and call that
+   */
+  async mintReward(logLine) {
+    if (!this.contract) {
+      throw new Error("Contract not initialized");
+    }
+
+    const iface = new ethers.Interface(this.abi);
+    const functions = Object.keys(iface.functions || {});
+
+    const hasMintReward = functions.some((f) =>
+      f.startsWith("mintReward(")
+    );
+    const hasMine = functions.some((f) => f.startsWith("mine("));
+
+    let tx;
+
+    if (hasMintReward) {
+      console.log("[BLSRMinter] Calling mintReward(logLine)");
+      tx = await this._sendWithRetry(() =>
+        this.contract.mintReward(logLine)
+      );
+    } else if (hasMine) {
+      const nonceBytes = ethers.id(logLine); // keccak256(logLine)
+      console.log("[BLSRMinter] Calling mine(bytes32) with hash:", nonceBytes);
+      tx = await this._sendWithRetry(() =>
+        this.contract.mine(nonceBytes)
+      );
+    } else {
+      throw new Error(
+        "No supported mint function found (expected mintReward(string) or mine(bytes32))"
+      );
+    }
+
+    const receipt = await tx.wait();
+    console.log("[BLSRMinter] Mint transaction confirmed:", receipt.transactionHash);
+
+    return receipt;
+  }
+
+  async _sendWithRetry(fn, maxRetries = 3) {
+    let lastError = null;
+
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const tx = await fn();
+        console.log(`[BLSRMinter] Transaction sent (attempt ${i + 1})`);
+        return tx;
+      } catch (err) {
+        lastError = err;
+        console.error(
+          `[BLSRMinter] tx attempt ${i + 1} failed:`,
+          err.message || err
+        );
+        await new Promise((res) =>
+          setTimeout(res, 1500 * (i + 1))
+        );
       }
-    } catch (_) {
-      // ignore and try next
     }
+
+    throw lastError || new Error("Transaction failed after retries");
   }
-  throw new Error("No working RPC endpoint available.");
+
+  async shutdown() {
+    this.provider = null;
+    this.wallet = null;
+    this.contract = null;
+    console.log("[BLSRMinter] Shutdown complete.");
+  }
 }
 
-// ------------------------------------------------------------
-// Miner Integration
-// ------------------------------------------------------------
-async function setupMinerIntegration() {
-  let rpcUrl = null;
-
-  try {
-    rpcUrl = await getWorkingRPC();
-  } catch (err) {
-    console.error("RPC selection failed:", err);
-    sendToRenderer("miner:error", {
-      type: "rpc",
-      message: "No working RPC endpoint available."
-    });
-    return;
-  }
-
-  watcher = new MinerWatcher(LOG_PATH);
-  minter = new BLSRMinter(rpcUrl, PRIVATE_KEY, CONTRACT_ADDRESS, CONTRACT_ABI);
-
-  sendToRenderer("miner:status", {
-    status: "watching",
-    logPath: LOG_PATH,
-    rpcUrl
-  });
-
-  watcher.on("blockSolved", async (logLine) => {
-    console.log("Block solved detected:", logLine);
-
-    sendToRenderer("miner:solved", {
-      status: "detected",
-      log: logLine,
-      tx: null
-    });
-
-    try {
-      // Updated: uses the improved mintReward logic from the new blsr-mint.js
-      const receipt = await minter.mintReward(logLine);
-
-      sendToRenderer("miner:solved", {
-        status: "minted",
-        log: logLine,
-        tx: receipt?.transactionHash || null
-      });
-
-      console.log("[MAIN] Mint confirmed:", receipt?.transactionHash);
-
-    } catch (err) {
-      console.error("Mint error:", err);
-      sendToRenderer("miner:error", {
-        type: "mint",
-        message: err?.message || String(err),
-        log: logLine
-      });
-    }
-  });
-
-  watcher.on("error", (err) => {
-    console.error("Watcher error:", err);
-    sendToRenderer("miner:error", {
-      type: "watcher",
-      message: err?.message || String(err)
-    });
-  });
-}
-
-// ------------------------------------------------------------
-// IPC: Renderer Requests Status
-// ------------------------------------------------------------
-ipcMain.handle("miner:get-status", async () => {
-  return {
-    logPath: LOG_PATH,
-    rpcUrls: RPC_URLS,
-    contract: CONTRACT_ADDRESS,
-    watching: !!watcher
-  };
-});
-
-// ------------------------------------------------------------
-// App Lifecycle
-// ------------------------------------------------------------
-app.whenReady().then(() => {
-  isReady = true;
-  createWindow();
-  setupMinerIntegration();
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
-});
-
-// ------------------------------------------------------------
-// Graceful Shutdown
-// ------------------------------------------------------------
-app.on("before-quit", () => {
-  try {
-    watcher?.stop?.();
-  } catch (err) {
-    console.error("Error stopping watcher:", err);
-  }
-  try {
-    minter?.shutdown?.();
-  } catch (err) {
-    console.error("Error shutting down minter:", err);
-  }
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
-
-// ------------------------------------------------------------
-// Uncaught Exception Handling
-// ------------------------------------------------------------
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught exception:", err);
-  if (isReady) {
-    sendToRenderer("miner:error", {
-      type: "uncaught",
-      message: err?.message || String(err)
-    });
-  }
-});
+module.exports = BLSRMinter;
