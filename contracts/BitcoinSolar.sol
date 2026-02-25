@@ -5,14 +5,14 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title BitcoinSolar (BLSR)
+ * @title BitcoinSolar (BLSR) Mining Controller
  * @dev Replicates Bitcoin's 21M supply and halving schedule.
  * Mining is executed via the Global Node (Website Backend).
  */
 contract BitcoinSolar is ERC20, Ownable {
-    uint256 public constant MAX_SUPPLY = 21000000 * 10**18;
-    uint256 public constant HALVING_INTERVAL = 2100000 * 10**18; // Halve every 2.1M tokens
-    
+    uint256 public constant MAX_SUPPLY = 21_000_000 * 10**18;
+    uint256 public constant HALVING_INTERVAL = 2_100_000 * 10**18; // Halve every 2.1M tokens
+
     uint256 public currentReward = 50 * 10**18; // Start at 50 BLSR per "block"
     uint256 public totalMined = 0;
     uint256 public lastHalvingMinedAmount = 0;
@@ -28,7 +28,10 @@ contract BitcoinSolar is ERC20, Ownable {
      * Enforces the halving logic and supply cap.
      */
     function executeMining(address miner) external onlyOwner {
-        require(totalMined + currentReward <= MAX_SUPPLY, "BLSR: Max supply reached");
+        require(
+            totalMined + currentReward <= MAX_SUPPLY,
+            "BLSR: Max supply reached"
+        );
 
         // Check if we need to halve the reward
         if (totalMined - lastHalvingMinedAmount >= HALVING_INTERVAL) {
@@ -39,7 +42,7 @@ contract BitcoinSolar is ERC20, Ownable {
 
         totalMined += currentReward;
         _mint(miner, currentReward);
-        
+
         emit BlockMined(miner, currentReward, totalMined);
     }
 
