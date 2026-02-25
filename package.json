@@ -1,13 +1,15 @@
 {
-  "name": "blsr-miner-wallpaper",
+  "name": "bitcoin-solar-miner",
   "version": "1.0.0",
+  "description": "BitcoinSolar (BLSR) cinematic miner and wallpaper",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "backend": "python main.py"
   },
   "dependencies": {
-    "ethers": "^6.7.1",
     "dotenv": "^16.4.5",
+    "ethers": "^6.7.1",
     "web3": "^4.13.0"
   },
   "devDependencies": {
