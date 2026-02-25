@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blsr-backend
+  labels:
+    app: blsr-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: blsr-backend
+  template:
+    metadata:
+      labels:
+        app: blsr-backend
+    spec:
+      containers:
+        - name: blsr-backend
+          image: ghcr.io/serobcholakyan/blsr-backend:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: blsr-backend-env
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blsr-backend-svc
+spec:
+  selector:
+    app: blsr-backend
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+
