@@ -1,0 +1,12 @@
+[Unit]
+Description=BLSR Mining Backend
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/root/BitcoinSolar.Sol/blsr-miner-backend
+ExecStart=/usr/bin/python3 app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
