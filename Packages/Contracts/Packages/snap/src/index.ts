@@ -18,26 +18,41 @@ import { ethers } from 'ethers';
  *  BitcoinSolar chain config
  * -----------------------------
  *
- * TODO: Replace the placeholders below with your real values:
- *  - RPC_URL: your Polygon / BLSR RPC endpoint
- *  - BLSR_CONTRACT: your deployed BLSR yield contract
- *  - ABI: the real ABI of your yield + harvest functions
+ * RPC_URL: real Polygon mainnet public RPC.
+ * BLSR_CONTRACT: you MUST replace with your real deployed BLSR ERC-20 address.
  */
 
-const RPC_URL = 'https://polygon-mainnet.infura.io/v3/YOUR_INFURA_KEY'; // TODO
-const BLSR_CONTRACT = '0xYOUR_BLSR_CONTRACT_ADDRESS'; // TODO
+const RPC_URL = 'https://polygon-rpc.com';
+const BLSR_CONTRACT = '0xYOUR_BLSR_CONTRACT_ADDRESS'; // <-- REPLACE WITH REAL ADDRESS
 
+/**
+ * ERC-20 ABI derived from your BitcoinSolar.sol (standard ERC-20).
+ * If your implementation adds extra functions, you can extend this.
+ */
 const BLSR_ABI = [
-  // Example ABI entries – replace with your real contract ABI
-  'function pendingYield(address account) view returns (uint256)',
-  'function harvest() returns (bool)',
+  // Read functions
+  'function name() view returns (string)',
+  'function symbol() view returns (string)',
+  'function decimals() view returns (uint8)',
+  'function totalSupply() view returns (uint256)',
+  'function balanceOf(address account) view returns (uint256)',
+  'function allowance(address owner, address spender) view returns (uint256)',
+
+  // Write functions
+  'function transfer(address to, uint256 amount) returns (bool)',
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function transferFrom(address from, address to, uint256 amount) returns (bool)',
+
+  // Events
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+  'event Approval(address indexed owner, address indexed spender, uint256 value)',
 ];
 
 const provider = new ethers.JsonRpcProvider(RPC_URL);
 const blsrContract = new ethers.Contract(BLSR_CONTRACT, BLSR_ABI, provider);
 
 /**
- * Format BLSR yield nicely.
+ * Format BLSR nicely.
  */
 function formatYield(amount: string | number): string {
   return `${amount} BLSR`;
@@ -60,7 +75,8 @@ async function getActiveAccount(): Promise<string> {
 }
 
 /**
- * Read real yield from the BLSR contract for the active account.
+ * Read "yield" as the live BLSR balance of the active account.
+ * This is real on-chain data from your ERC-20 contract.
  */
 async function fetchRealYield(): Promise<{
   ok: boolean;
@@ -71,11 +87,11 @@ async function fetchRealYield(): Promise<{
 }> {
   const account = await getActiveAccount();
 
-  const pending = (await blsrContract.pendingYield(account)) as ethers.BigNumberish;
-  const raw = pending.toString();
+  const balance = (await blsrContract.balanceOf(account)) as ethers.BigNumberish;
+  const raw = balance.toString();
 
-  // If your token has 18 decimals, adjust here
-  const human = ethers.formatUnits(pending, 18);
+  // Standard ERC-20: 18 decimals (adjust if your token uses a different value)
+  const human = ethers.formatUnits(balance, 18);
 
   return {
     ok: true,
@@ -87,48 +103,26 @@ async function fetchRealYield(): Promise<{
 }
 
 /**
- * Trigger a real harvest transaction.
- *
- * NOTE:
- *  - This uses a raw JSON-RPC `eth_sendTransaction` via the ethereum provider.
- *  - If your contract requires a specific method selector / data, encode it with ethers.
+ * Harvest: for a pure ERC-20 token there is no "harvest" function.
+ * If your yield is minted elsewhere, wire that contract here.
+ * For now, we just return the current balance as a "harvest snapshot".
  */
 async function performHarvest(): Promise<{
   ok: boolean;
   account: string;
-  txHash: string;
+  raw: string;
+  blsr: string;
   timestamp: number;
 }> {
-  const account = await getActiveAccount();
-
-  const iface = new ethers.Interface(BLSR_ABI);
-  const data = iface.encodeFunctionData('harvest', []);
-
-  // @ts-ignore - ethereum is injected by the ethereum-provider endowment
-  const txHash = (await ethereum.request({
-    method: 'eth_sendTransaction',
-    params: [
-      {
-        from: account,
-        to: BLSR_CONTRACT,
-        data,
-      },
-    ],
-  })) as string;
-
-  return {
-    ok: true,
-    account,
-    txHash,
-    timestamp: Date.now(),
-  };
+  const yieldInfo = await fetchRealYield();
+  return yieldInfo;
 }
 
 /**
- * Transaction insight handler – stays UI-focused.
+ * Transaction insight handler – UI only.
  */
 export const onTransaction: OnTransactionHandler = async ({ transaction }) => {
-  const estimatedYield = formatYield('0.052'); // Optional: you can wire this to real data later.
+  const estimatedYield = formatYield('0.052'); // You can wire this to real data later.
 
   return {
     content: panel([
