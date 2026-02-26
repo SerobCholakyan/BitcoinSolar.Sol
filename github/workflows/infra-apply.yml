@@ -1,0 +1,51 @@
+on:
+  push:
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-apply.yml"
+  workflow_dispatch:
+
+jobs:
+  validate-and-apply:
+    runs-on: ubuntu-latest
+
+    env:
+      K8S_SERVER: ${{ secrets.K8S_SERVER }}
+      K8S_TOKEN: ${{ secrets.K8S_TOKEN }}
+      K8S_NAMESPACE: ${{ secrets.K8S_NAMESPACE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          cat <<EOF > $HOME/.kube/config
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - cluster:
+              server: ${K8S_SERVER}
+              insecure-skip-tls-verify: true
+            name: cluster
+          contexts:
+          - context:
+              cluster: cluster
+              user: deployer
+              namespace: ${K8S_NAMESPACE}
+            name: deploy
+          current-context: deploy
+          users:
+          - name: deployer
+            user:
+              token: ${K8S_TOKEN}
+          EOF
+
+      - name: Validate manifests
+        run: |
+          kubectl -n "${K8S_NAMESPACE}" apply --dry-run=client -f infra/
+
+      - name: Apply manifests
+        run: |
+          kubectl -n "${K8S_NAMESPACE}" apply -f infra/
