@@ -1,0 +1,46 @@
+on:
+  push:
+    paths:
+      - "blsr-miner-website/**"
+      - ".github/workflows/dashboard-deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_ENV: ${{ vars.NODE_ENV }}
+      VITE_RPC_URL: ${{ secrets.RPC_URL }}
+      VITE_CONTRACT_ADDRESS: ${{ secrets.CONTRACT_ADDRESS }}
+      VITE_CHAIN_ID: ${{ vars.CHAIN_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: blsr-miner-website
+        run: |
+          npm ci
+
+      - name: Build dashboard
+        working-directory: blsr-miner-website
+        run: |
+          npm run build
+
+      - name: Upload static artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-dist
+          path: blsr-miner-website/dist
+
+      # Replace this with your actual static hosting deploy (Netlify, your platform, etc.)
+      - name: Placeholder deploy step
+        run: |
+          echo "Deploy dashboard-dist to your static hosting platform here."
