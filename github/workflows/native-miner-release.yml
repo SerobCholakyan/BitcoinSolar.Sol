@@ -1,0 +1,66 @@
+on:
+  push:
+    tags:
+      - "miner-v*"
+  workflow_dispatch:
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build miner
+        working-directory: blsr-native-miner
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+
+      - name: Archive binary
+        shell: bash
+        run: |
+          mkdir -p dist
+          NAME="blsr-miner-${{ matrix.target }}"
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cp target/${{ matrix.target }}/release/*.exe "dist/${NAME}.exe"
+          else
+            cp target/${{ matrix.target }}/release/* "dist/${NAME}"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blsr-miner-${{ matrix.target }}
+          path: dist/*
+
+  publish-release:
+    needs: build-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
