@@ -1,0 +1,72 @@
+name: Contracts CI
+
+on:
+  push:
+    paths:
+      - "contracts/**"
+      - "hardhat.config.*"
+      - "package.json"
+      - "yarn.lock"
+      - "pnpm-lock.yaml"
+  pull_request:
+    paths:
+      - "contracts/**"
+
+jobs:
+  contracts-ci:
+    runs-on: ubuntu-latest
+
+    env:
+      RPC_URL: ${{ secrets.RPC_URL }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            corepack enable
+            pnpm install
+          elif [ -f yarn.lock ]; then
+            yarn install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: Compile contracts
+        run: |
+          npx hardhat compile
+
+      - name: Run tests
+        run: |
+          npx hardhat test
+
+      - name: Export ABI
+        run: |
+          mkdir -p artifacts/abi
+          find artifacts/contracts -name "*.json" -maxdepth 3 -print0 | xargs -0 -I{} cp "{}" artifacts/abi/ || true
+
+      - name: Upload ABI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: contracts-abi
+          path: artifacts/abi
+
+      - name: Verify contract (optional)
+        if: github.ref == 'refs/heads/main' && env.ETHERSCAN_API_KEY != ''
+        run: |
+          if [ -n "${CONTRACT_ADDRESS}" ]; then
+            npx hardhat verify --network mainnet "${CONTRACT_ADDRESS}"
+          else
+            echo "CONTRACT_ADDRESS not set, skipping verification"
+          fi
+        env:
+          CONTRACT_ADDRESS: ${{ secrets.CONTRACT_ADDRESS }}
