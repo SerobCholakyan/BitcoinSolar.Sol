@@ -1,31 +1,28 @@
 # BitcoinSolar.Sol
 
-BitcoinSolar is a sovereign, cloud-native mining and governance platform with:
+A sovereign, cloud-native mining and governance platform.
 
-- Solidity contracts
-- Native Rust miner
-- Python mining backend
-- Web dashboard
+## Components
+
+- Smart contracts
+- Python backend
+- Rust native miner
+- Miner dashboard
 - Operator panel
-- Kubernetes + Nginx deployment
+- Kubernetes deployment
+- Nginx reverse proxy
+- CI/CD pipelines
 
-## Structure
+## Setup
 
-- `contracts/` – BitcoinSolar smart contracts
-- `blsr-miner-backend/` – Python backend for mining coordination
-- `blsr-native-miner/` – Rust native miner
-- `blsr-miner-website/` – Miner dashboard (frontend)
-- `blsr-operator-panel/` – Operator control panel
-- `infra/` – Kubernetes manifests
-- `nginx/` – Nginx configs
-- `.github/workflows/` – CI/CD pipelines
+Copy `.env.example` → `.env` in each service.
 
-## Environment
+## CI/CD
 
-Each service has its own `.env.example`. Copy and fill:
+GitHub Actions:
 
-```bash
-cp blsr-miner-backend/.env.example blsr-miner-backend/.env
-cp blsr-miner-website/.env.example blsr-miner-website/.env
-cp blsr-operator-panel/.env.example blsr-operator-panel/.env
-cp blsr-native-miner/.env.example blsr-native-miner/.env
+- contracts-ci.yml
+- backend-deploy.yml
+- native-miner-release.yml
+- dashboard-deploy.yml
+- infra-apply.yml
