@@ -1,18 +1,17 @@
 {
-  "name": "bitcoin-solar-miner",
+  "name": "bitcoinsolar",
   "version": "1.0.0",
-  "description": "BitcoinSolar (BLSR) cinematic miner and wallpaper",
-  "main": "main.js",
+  "private": true,
   "scripts": {
-    "start": "electron .",
-    "backend": "python main.py"
-  },
-  "dependencies": {
-    "dotenv": "^16.4.5",
-    "ethers": "^6.7.1",
-    "web3": "^4.13.0"
+    "contracts:compile": "hardhat compile",
+    "contracts:test": "hardhat test",
+    "contracts:deploy": "node contracts/scripts/deploy.js",
+    "contracts:verify": "node contracts/scripts/verify.js"
   },
   "devDependencies": {
-    "electron": "^32.0.0"
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
+    "hardhat": "^2.19.0"
   }
 }
