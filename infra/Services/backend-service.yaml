@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bitcoinsolar-backend
+  labels:
+    app: bitcoinsolar-backend
+spec:
+  selector:
+    app: bitcoinsolar-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
