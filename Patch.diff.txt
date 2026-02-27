@@ -1,0 +1,16 @@
+1. Deploy this stack on a VPS (DigitalOcean, AWS, etc.) with docker-compose up -d.
+2. Register a project via POST /projects with:• name
+• githubUrl
+• buildCommand (e.g., npm install && npm run build)
+• outputDir (e.g., dist or .next/out)
+
+3. Set a GitHub webhook on that repo pointing to:• https://your-domain/webhooks/github
+
+4. On every push:• Webhook hits platform-api
+• API enqueues build on runner
+• Runner clones/pulls, builds, deploys to /apps/public/<projectId>/
+• Nginx serves it at http://your-domain/apps/public/<projectId>/
+
+
+
+GitHub in → build → publish apps/sites.
