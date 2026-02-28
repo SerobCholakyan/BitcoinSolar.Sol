@@ -3,10 +3,13 @@ Description=BLSR Mining Backend
 After=network.target
 
 [Service]
-User=root
+User=blsr
+Group=blsr
 WorkingDirectory=/root/BitcoinSolar.Sol/blsr-miner-backend
-ExecStart=/usr/bin/python3 app.py
+ExecStart=/root/BitcoinSolar.Sol/blsr-miner-backend/.venv/bin/python app.py
+EnvironmentFile=/root/BitcoinSolar.Sol/digitalocean-deploy/env/backend.env
 Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

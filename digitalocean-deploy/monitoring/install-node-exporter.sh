@@ -1,19 +1,32 @@
 #!/bin/bash
-useradd --no-create-home node_exporter
-wget https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-1.7.0.linux-amd64.tar.gz
-tar xvf node_exporter-*.tar.gz
-cp node_exporter-*/node_exporter /usr/local/bin/
+set -euo pipefail
+
+NODE_EXPORTER_VERSION="1.7.0"
+ARCH="linux-amd64"
+TARBALL="node_exporter-${NODE_EXPORTER_VERSION}.${ARCH}.tar.gz"
+URL="https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/${TARBALL}"
+
+id -u node_exporter &>/dev/null || useradd --no-create-home --shell /usr/sbin/nologin node_exporter
+
+cd /tmp
+wget -q "$URL"
+tar xf "$TARBALL"
+cp "node_exporter-${NODE_EXPORTER_VERSION}.${ARCH}/node_exporter" /usr/local/bin/
+
+rm -rf "/tmp/node_exporter-${NODE_EXPORTER_VERSION}.${ARCH}" "/tmp/${TARBALL}"
 
 cat <<EOF >/etc/systemd/system/node_exporter.service
 [Unit]
 Description=Node Exporter
+After=network.target
 
 [Service]
 User=node_exporter
 ExecStart=/usr/local/bin/node_exporter
+Restart=always
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload

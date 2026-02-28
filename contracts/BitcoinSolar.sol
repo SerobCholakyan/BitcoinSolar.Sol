@@ -32,7 +32,6 @@ contract BitcoinSolar is ERC20, SecurityBridge, SupplyManager {
     // Rate-limiting: one mint per miner per block
     mapping(address => uint256) private _lastMinedBlock;
 
-    // Events for the Website to listen to
     event BlockMined(address indexed miner, uint256 amount, uint256 currentTotal);
     event HalvingOccurred(uint256 newReward);
     event HalvingOccurred(uint256 newReward, uint256 era);
@@ -49,6 +48,9 @@ contract BitcoinSolar is ERC20, SecurityBridge, SupplyManager {
      * The reward is derived from totalMined via SupplyManager, so
      * halvings are computed — not tracked in mutable state.
      */
+    function executeMining(address miner) external onlyAuthorized {
+        require(miner != address(0), "BLSR: zero address");
+        require(
     function executeMining(address miner) external onlyOwner {
     function executeMining(address miner) external onlyAuthorized {
         require(miner != address(0), "BLSR: zero address");

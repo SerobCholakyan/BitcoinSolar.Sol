@@ -10,7 +10,13 @@ from typing import Dict
 from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+try:
+    from web3.middleware import ExtraDataToPOAMiddleware as poa_middleware
+except ImportError:
+    try:
+        from web3.middleware import geth_poa_middleware as poa_middleware
+    except ImportError:
+        poa_middleware = None
 from dotenv import load_dotenv
 from prometheus_client import (
     Counter,
@@ -33,8 +39,8 @@ MINER_API_KEYS = set(
 )
 
 w3 = Web3(Web3.HTTPProvider(RPC_URL)) if RPC_URL else None
-if w3:
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+if w3 and poa_middleware:
+    w3.middleware_onion.inject(poa_middleware, layer=0)
 
 CONTRACT_ABI = [
     {
