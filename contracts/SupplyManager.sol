@@ -25,4 +25,10 @@ abstract contract SupplyManager {
     function calculateCurrentReward(uint256 currentSupply) public pure returns (uint256) {
         uint256 era = currentSupply / HALVING_INTERVAL;
 
-        // After ~33 halvings, reward becomes zero (similar to
+        // After ~33 halvings, reward becomes zero (similar to Bitcoin)
+        if (era >= 33) return 0;
+
+        // Bitshift halves the reward each era
+        return INITIAL_REWARD >> era;
+    }
+}
