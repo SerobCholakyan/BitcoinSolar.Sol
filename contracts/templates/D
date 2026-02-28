@@ -1,0 +1,15 @@
+version: '3'
+services:
+  web:
+    build: .
+    ports: ["5000:5000"]
+    env_file: .env
+  mongodb:
+    image: mongo:latest
+    ports: ["27017:27017"]
+  vault:
+    image: hashicorp/vault:latest
+    ports: ["8200:8200"]
+    cap_add: [IPC_LOCK]
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "blsr-master-token"
