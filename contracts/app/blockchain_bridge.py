@@ -5,7 +5,7 @@ class BlockchainBridge:
     def __init__(self):
         # Use an Infura or Alchemy URL for Polygon/Ethereum
         self.w3 = Web3(Web3.HTTPProvider(os.environ.get('BLOCKCHAIN_PROVIDER_URL')))
-        self.contract_address = os.environ.get('BLSR_CONTRACT_ADDRESS')
+        self.contract_address = os.environ.get('0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d')
         self.private_key = os.environ.get('VAULT_OWNER_KEY') # Store this in Vault!
         
         # Load Contract ABI (Simplified for example)
