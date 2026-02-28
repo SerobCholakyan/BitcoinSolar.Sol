@@ -1,14 +1,8 @@
 const hre = require("hardhat");
 
 async function main() {
-  const BitcoinSolar = await hre.ethers.getContractFactory("BitcoinSolar");
-  const contract = await BitcoinSolar.deploy();
-  await contract.deployed();
-
-  console.log("BitcoinSolar deployed to:", contract.address);
+  const Token = await hre.ethers.getContractFactory("BitcoinSolar");
+  const token = await Token.deploy();
+  await token.waitForDeployment();
+  console.log("BitcoinSolar deployed:", token.target);
 }
-
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
