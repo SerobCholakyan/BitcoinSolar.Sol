@@ -10,15 +10,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * BitcoinSolar uses this to restrict mining execution.
  */
 abstract contract SecurityBridge is Ownable {
-    mapping(address => bool) private authorizedNodes;
+    mapping(address => bool) internal authorizedNodes;
 
     event NodeAuthorized(address indexed node);
     event NodeRevoked(address indexed node);
 
-    constructor() Ownable(msg.sender) {
-        authorizedNodes[msg.sender] = true;
-        emit NodeAuthorized(msg.sender);
-    }
+    // No constructor here – inheriting contract initializes authorized nodes.
 
     modifier onlyAuthorized() {
         require(authorizedNodes[msg.sender], "SECURITY_ERR: UNAUTHORIZED_NODE");
