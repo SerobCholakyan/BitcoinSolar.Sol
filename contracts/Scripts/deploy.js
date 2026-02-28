@@ -6,3 +6,5 @@ async function main() {
   await token.waitForDeployment();
   console.log("BitcoinSolar deployed:", token.target);
 }
+
+main();
