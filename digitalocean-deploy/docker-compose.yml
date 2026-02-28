@@ -1,22 +1,24 @@
-version: "3.9"
-
 services:
   blsr-backend:
-    build: ../blsr-miner-backend
+    build:
+      context: ../blsr-miner-backend
+      dockerfile: Dockerfile
     container_name: blsr-backend
     restart: always
     env_file:
       - ./env/backend.env
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
 
   nginx:
-    image: nginx:latest
+    image: nginx:stable
     container_name: blsr-nginx
     restart: always
+    depends_on:
+      - blsr-backend
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     ports:
       - "80:80"
       - "443:443"
