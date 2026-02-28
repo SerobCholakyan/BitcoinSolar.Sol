@@ -7,6 +7,22 @@
   {
     "anonymous": false,
     "inputs": [
+      { "indexed": true, "internalType": "address", "name": "node", "type": "address" }
+    ],
+    "name": "NodeAuthorized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "node", "type": "address" }
+    ],
+    "name": "NodeRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
       { "indexed": true, "internalType": "address", "name": "miner", "type": "address" },
       { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },
       { "indexed": false, "internalType": "uint256", "name": "newTotal", "type": "uint256" }
@@ -138,6 +154,17 @@
     "name": "removeAuthorizedNode",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "node", "type": "address" }
+    ],
+    "name": "isAuthorizedNode",
+    "outputs": [
+      { "internalType": "bool", "name": "", "type": "bool" }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
