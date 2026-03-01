@@ -1,0 +1,17 @@
+{
+  "name": "bitcoin-solar-miner",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "build": "electron-builder",
+    "lint": "echo \"no lint\""
+  },
+  "dependencies": {
+    "electron": "^30.0.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.6.0"
+  }
+}
