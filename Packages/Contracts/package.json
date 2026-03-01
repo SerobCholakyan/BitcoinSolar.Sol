@@ -1,11 +1,15 @@
 {
-  "name": "bitcoinsolar-contracts",
+  "name": "@bitcoinsolar/contracts-root",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "Packages/core",
+    "Packages/snap"
+  ],
   "scripts": {
-    "dev": "echo \"no dev for contracts\"",
-    "build": "echo \"compile contracts here\"",
+    "dev": "echo \"no dev at root contracts\"",
+    "build": "pnpm --filter @bitcoinsolar/contracts-core build && pnpm --filter @bitcoinsolar/snap build",
     "lint": "echo \"no lint\"",
-    "test": "echo \"run contract tests here\""
+    "test": "pnpm --filter @bitcoinsolar/contracts-core test"
   }
 }
