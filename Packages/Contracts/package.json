@@ -1,13 +1,1 @@
-{
-  "name": "blsr-contracts",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "build": "npx hardhat compile && node scripts/export-abi.js",
-    "test": "npx hardhat test"
-  },
-  "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
-    "hardhat": "^2.22.0"
-  }
-}
+
