@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "echo \"snap dev server (e.g. mm-snap dev)\"",
-    "build": "echo \"build snap bundle here\"",
+    "dev": "echo \"run snap dev server here (e.g. mm-snap dev)\"",
+    "build": "echo \"bundle snap here (e.g. mm-snap build)\"",
     "lint": "echo \"no lint\"",
     "test": "echo \"run snap tests here\""
   }
