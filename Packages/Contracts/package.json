@@ -1,15 +1,13 @@
 {
-  "name": "@bitcoinsolar/contracts-root",
+  "name": "blsr-contracts",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "Packages/core",
-    "Packages/snap"
-  ],
   "scripts": {
-    "dev": "echo \"no dev at root contracts\"",
-    "build": "pnpm --filter @bitcoinsolar/contracts-core build && pnpm --filter @bitcoinsolar/snap build",
-    "lint": "echo \"no lint\"",
-    "test": "pnpm --filter @bitcoinsolar/contracts-core test"
+    "build": "npx hardhat compile && node scripts/export-abi.js",
+    "test": "npx hardhat test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.22.0"
   }
 }
