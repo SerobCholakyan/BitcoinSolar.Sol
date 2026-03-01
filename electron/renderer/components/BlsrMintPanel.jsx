@@ -26,25 +26,25 @@ export default function BlsrMintPanel() {
   };
 
   return (
-    <div style={{ padding: "1rem", background: "#05060a", color: "#f5f5f5" }}>
-      <h2>BLSR On-Chain Mint</h2>
+    <div style={{ padding: "2rem", maxWidth: 800, margin: "0 auto" }}>
+      <h1 style={{ fontSize: "1.75rem", fontWeight: 700 }}>BLSR On‑Chain Mint</h1>
       <p style={{ opacity: 0.8 }}>
-        Paste a solved block log line to mint BLSR rewards on-chain.
+        Submit a solved block log line to mint BLSR rewards on-chain.
       </p>
 
       <textarea
         value={logLine}
         onChange={(e) => setLogLine(e.target.value)}
-        rows={4}
+        rows={5}
         style={{
           width: "100%",
-          marginTop: "0.5rem",
-          padding: "0.5rem",
+          padding: "0.75rem",
           background: "#0b0d14",
-          color: "#f5f5f5",
-          border: "1px solid #222",
-          borderRadius: 4,
+          color: "#e5e7eb",
+          borderRadius: 8,
+          border: "1px solid #1f2937",
           fontFamily: "monospace",
+          fontSize: "0.9rem"
         }}
         placeholder="[miner] block=12345 nonce=0xabc... difficulty=..."
       />
@@ -54,21 +54,29 @@ export default function BlsrMintPanel() {
         disabled={loading || !logLine.trim()}
         style={{
           marginTop: "0.75rem",
-          padding: "0.5rem 1rem",
-          background: loading ? "#333" : "#ffb300",
-          color: "#05060a",
+          padding: "0.6rem 1.4rem",
+          background: loading ? "#374151" : "#fbbf24",
+          color: "#111827",
+          borderRadius: 999,
           border: "none",
-          borderRadius: 4,
-          cursor: loading ? "default" : "pointer",
           fontWeight: 600,
+          cursor: loading || !logLine.trim() ? "default" : "pointer"
         }}
       >
         {loading ? "Minting..." : "Mint BLSR"}
       </button>
 
       {result && (
-        <div style={{ marginTop: "1rem", fontSize: "0.9rem" }}>
-          <div>✅ Mint successful</div>
+        <div
+          style={{
+            marginTop: "1rem",
+            padding: "0.75rem",
+            borderRadius: 8,
+            background: "rgba(22, 163, 74, 0.1)",
+            border: "1px solid rgba(22, 163, 74, 0.4)"
+          }}
+        >
+          <div>Mint successful</div>
           <div>Tx: {result.txHash}</div>
           <div>Status: {result.status}</div>
           <div>Block: {result.blockNumber}</div>
@@ -76,8 +84,17 @@ export default function BlsrMintPanel() {
       )}
 
       {error && (
-        <div style={{ marginTop: "1rem", color: "#ff6b6b", fontSize: "0.9rem" }}>
-          ❌ {error}
+        <div
+          style={{
+            marginTop: "1rem",
+            padding: "0.75rem",
+            borderRadius: 8,
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.4)",
+            color: "#fecaca"
+          }}
+        >
+          {error}
         </div>
       )}
     </div>
