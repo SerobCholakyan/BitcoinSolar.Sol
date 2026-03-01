@@ -1,0 +1,11 @@
+{
+  "name": "@bitcoinsolar/snap",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"snap dev server (e.g. mm-snap dev)\"",
+    "build": "echo \"build snap bundle here\"",
+    "lint": "echo \"no lint\"",
+    "test": "echo \"run snap tests here\""
+  }
+}
