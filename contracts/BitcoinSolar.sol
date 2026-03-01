@@ -27,7 +27,7 @@ contract BitcoinSolar is ERC20, SecurityBridge, SupplyManager {
     event HalvingOccurred(uint256 newReward, uint256 era);
 
     constructor() ERC20("BitcoinSolar", "BLSR") {
-        // Initialize deployer as first authorized backend node
+        // Initialize deployer as the first authorized backend node
         authorizedNodes[msg.sender] = true;
         emit NodeAuthorized(msg.sender);
     }
