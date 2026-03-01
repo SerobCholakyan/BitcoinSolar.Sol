@@ -1,0 +1,10 @@
+{
+  "name": "blsr-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node dev.js",
+    "build": "echo \"backend has no build step\"",
+    "lint": "echo \"no lint\""
+  }
+}
