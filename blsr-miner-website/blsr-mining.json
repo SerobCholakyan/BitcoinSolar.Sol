@@ -1,0 +1,100 @@
+{
+  "title": "BLSR Mining Operator View",
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 2,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Miners Connected",
+      "targets": [
+        {
+          "expr": "blsr_miners_connected",
+          "legendFormat": "miners"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }
+    },
+    {
+      "type": "stat",
+      "title": "Jobs Issued",
+      "targets": [
+        {
+          "expr": "increase(blsr_jobs_issued_total[1h])",
+          "legendFormat": "jobs/hr"
+        }
+      ],
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }
+    },
+    {
+      "type": "stat",
+      "title": "Valid Shares (5m)",
+      "targets": [
+        {
+          "expr": "increase(blsr_shares_submitted_total{result=\"valid\"}[5m])",
+          "legendFormat": "valid"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }
+    },
+    {
+      "type": "stat",
+      "title": "Invalid Shares (5m)",
+      "targets": [
+        {
+          "expr": "increase(blsr_shares_submitted_total{result=\"invalid\"}[5m])",
+          "legendFormat": "invalid"
+        }
+      ],
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }
+    },
+    {
+      "type": "graph",
+      "title": "Shares Over Time",
+      "targets": [
+        {
+          "expr": "rate(blsr_shares_submitted_total{result=\"valid\"}[5m])",
+          "legendFormat": "valid"
+        },
+        {
+          "expr": "rate(blsr_shares_submitted_total{result=\"invalid\"}[5m])",
+          "legendFormat": "invalid"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 }
+    },
+    {
+      "type": "graph",
+      "title": "Jobs Issued Over Time",
+      "targets": [
+        {
+          "expr": "rate(blsr_jobs_issued_total[5m])",
+          "legendFormat": "jobs/s"
+        }
+      ],
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Last executeMining()",
+      "targets": [
+        {
+          "expr": "blsr_last_execute_mining_ts",
+          "legendFormat": "timestamp"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 12, "w": 6, "h": 4 }
+    },
+    {
+      "type": "graph",
+      "title": "Node CPU Usage",
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": { "x": 6, "y": 12, "w": 18, "h": 8 }
+    }
+  ]
+}
