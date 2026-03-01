@@ -1,6 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import BlsrMintPanel from "./components/BlsrMintPanel";
+import BlsrMintPanel from "./components/BlsrMintPanel.jsx";
 
 const root = createRoot(document.getElementById("root"));
 root.render(<BlsrMintPanel />);
