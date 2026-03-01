@@ -1,0 +1,11 @@
+{
+  "name": "bitcoinsolar-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"no dev for contracts\"",
+    "build": "echo \"compile contracts here\"",
+    "lint": "echo \"no lint\"",
+    "test": "echo \"run contract tests here\""
+  }
+}
