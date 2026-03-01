@@ -1,0 +1,13 @@
+{
+  "name": "@bitcoinsolar/electron-apps",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "miner-dashboard"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter miner-dashboard dev",
+    "build": "pnpm --filter miner-dashboard build",
+    "lint": "pnpm --filter miner-dashboard lint"
+  }
+}
