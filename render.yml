@@ -27,3 +27,21 @@ services:
         sync: false
       - key: CHAIN_ID
         sync: false
+
+  - type: web
+    name: bitcoinsolar-webapp
+    env: node
+    rootDir: blsr-miner-website
+    buildCommand: |
+      npm install
+      npm run build
+    startCommand: |
+      npm start
+    autoDeploy: true
+    plan: starter
+    buildFilter:
+      paths:
+        - blsr-miner-website/**
+    envVars:
+      - key: NODE_VERSION
+        value: 22
