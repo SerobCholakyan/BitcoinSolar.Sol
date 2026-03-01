@@ -1,0 +1,29 @@
+services:
+  - type: worker
+    name: ai-orchestrator
+    env: node
+    rootDir: ai-orchestrator
+    buildCommand: |
+      npm install
+      npm run build
+    startCommand: |
+      npm start
+    autoDeploy: true
+    plan: starter
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_APP_PRIVATE_KEY
+        sync: false
+      - key: RENDER_DEPLOY_HOOK_WEBAPP
+        sync: false
+      - key: RENDER_DEPLOY_HOOK_BACKEND
+        sync: false
+      - key: DIGITALOCEAN_API_KEY
+        sync: false
+      - key: RPC_URL
+        sync: false
+      - key: CHAIN_ID
+        sync: false
