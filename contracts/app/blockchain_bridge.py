@@ -1,4 +1,5 @@
 import time
+import json
 import requests
 from web3 import Web3
 from eth_account import Account
@@ -12,7 +13,6 @@ BLSR_RPC = "https://mainnet.infura.io/v3/YOUR_KEY"
 CONTRACT_ADDRESS = "0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d"
 
 # Load ABI from your repo
-import json
 with open("abi/blsr-abi.json") as f:
     BLSR_ABI = json.load(f)["abi"]
 
@@ -47,9 +47,7 @@ def select_miner(btc_hash, authorized_nodes):
 # -----------------------------
 
 def get_authorized_nodes():
-    # In your system, you maintain this list off-chain
-    # or query your operator panel API.
-    # For now, assume static list:
+    # TODO: replace with operator panel / registry
     return [
         ACCOUNT.address
     ]
