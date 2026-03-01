@@ -1,1 +1,17 @@
-
+{
+  "name": "@bitcoinsolar/contracts-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BitcoinSolar smart contracts + Snap packages",
+  "workspaces": [
+    "Packages/core",
+    "Packages/snap"
+  ],
+  "scripts": {
+    "dev": "echo \"No dev server for contracts root\"",
+    "build": "pnpm --filter @bitcoinsolar/contracts-core build && pnpm --filter @bitcoinsolar/snap build",
+    "lint": "echo \"No lint step at contracts root\"",
+    "test": "pnpm --filter @bitcoinsolar/contracts-core test"
+  },
+  "license": "MIT"
+}
