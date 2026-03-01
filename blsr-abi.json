@@ -1,38 +1,8 @@
-// blsr-contract.js
-// Universal ES module for BitcoinSolar (BLSR)
-// Works in Node.js, React, Electron, MetaMask Snap, Cloudflare Workers, Deno, etc.
-
-import { ethers } from "ethers";
-
-// -----------------------------------------------------------------------------
-// Contract address
-// -----------------------------------------------------------------------------
-export const BLSR_ADDRESS = "0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d";
-
-// -----------------------------------------------------------------------------
-// ABI (Final Updated Version)
-// -----------------------------------------------------------------------------
-export const BLSR_ABI = [
+[
   {
     "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      { "indexed": true, "internalType": "address", "name": "node", "type": "address" }
-    ],
-    "name": "NodeAuthorized",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      { "indexed": true, "internalType": "address", "name": "node", "type": "address" }
-    ],
-    "name": "NodeRevoked",
-    "type": "event"
   },
   {
     "anonymous": false,
@@ -56,21 +26,17 @@ export const BLSR_ABI = [
   {
     "anonymous": false,
     "inputs": [
-      { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
-      { "indexed": true, "internalType": "address", "name": "spender", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }
+      { "indexed": true, "internalType": "address", "name": "node", "type": "address" }
     ],
-    "name": "Approval",
+    "name": "NodeAuthorized",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      { "indexed": true, "internalType": "address", "name": "from", "type": "address" },
-      { "indexed": true, "internalType": "address", "name": "to", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }
+      { "indexed": true, "internalType": "address", "name": "node", "type": "address" }
     ],
-    "name": "Transfer",
+    "name": "NodeRevoked",
     "type": "event"
   },
   {
@@ -84,23 +50,29 @@ export const BLSR_ABI = [
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "spender", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+      { "internalType": "address", "name": "miner", "type": "address" }
     ],
-    "name": "approve",
-    "outputs": [
-      { "internalType": "bool", "name": "", "type": "bool" }
-    ],
+    "name": "executeMining",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "account", "type": "address" }
+      { "internalType": "address", "name": "node", "type": "address" }
     ],
-    "name": "balanceOf",
+    "name": "removeAuthorizedNode",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "node", "type": "address" }
+    ],
+    "name": "isAuthorizedNode",
     "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" }
+      { "internalType": "bool", "name": "", "type": "bool" }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -114,24 +86,6 @@ export const BLSR_ABI = [
       { "internalType": "uint256", "name": "", "type": "uint256" }
     ],
     "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "miner", "type": "address" }
-    ],
-    "name": "executeMining",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "MAX_SUPPLY",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -162,20 +116,66 @@ export const BLSR_ABI = [
     ],
     "stateMutability": "view",
     "type": "function"
-  }
-];
+  },
+  {
+    "inputs": [],
+    "name": "MAX_SUPPLY",
+    "outputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
 
-// -----------------------------------------------------------------------------
-// Universal contract loader
-// -----------------------------------------------------------------------------
-export function getBlsrContract(providerOrSigner) {
-  if (!providerOrSigner) {
-    throw new Error("Provider or signer is required to initialize BLSR contract");
+  /* ERC20 Standard */
+  {
+    "inputs": [],
+    "name": "name",
+    "outputs": [
+      { "internalType": "string", "name": "", "type": "string" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "symbol",
+    "outputs": [
+      { "internalType": "string", "name": "", "type": "string" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [
+      { "internalType": "uint8", "name": "", "type": "uint8" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "account", "type": "address" }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "recipient", "type": "address" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "transfer",
+    "outputs": [
+      { "internalType": "bool", "name": "", "type": "bool" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
-
-  return new ethers.Contract(
-    BLSR_ADDRESS,
-    BLSR_ABI,
-    providerOrSigner
-  );
-}
+]
