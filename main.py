@@ -1,126 +1,70 @@
-import os
-import threading
+# main.py
 import json
+import os
+import subprocess
+import time
+from pathlib import Path
 
-from flask import Flask, render_template, jsonify, request
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from dotenv import load_dotenv
+from web3 import Web3
 
-load_dotenv()
+ROOT = Path(__file__).resolve().parent
 
-app = Flask(__name__)
+load_dotenv(ROOT / ".env")
 
-# --- BLOCKCHAIN CONFIG ---
-RPC_URL = os.getenv(
-    "POLYGON_RPC",
-    "https://polygon-mainnet.infura.io/v3/YOUR_INFURA_KEY",
-)
-w3 = Web3(Web3.HTTPProvider(RPC_URL))
-w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-
-CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
+RPC_URL = os.getenv("RPC_URL")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
+CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
 
-ABI = json.loads(
-    """[
-      {
-        "inputs":[{"internalType":"address","name":"miner","type":"address"}],
-        "name":"executeMining",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs":[],
-        "name":"totalMined",
-        "outputs":[{"internalType":"uint256","name":"","type":"uint256"}],
-        "stateMutability":"view",
-        "type":"function"
-      }
-    ]"""
-)
+if not RPC_URL or not PRIVATE_KEY or not CONTRACT_ADDRESS:
+    raise RuntimeError("RPC_URL, PRIVATE_KEY, CONTRACT_ADDRESS must be set in .env")
+
+with open(ROOT / "blsr-abi.json") as f:
+    ABI = json.load(f)
+
+w3 = Web3(Web3.HTTPProvider(RPC_URL))
+account = w3.eth.account.from_key(PRIVATE_KEY)
+contract = w3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), abi=ABI)
 
 
-def background_mint(miner_address: str) -> None:
-  try:
-      if not PRIVATE_KEY or not CONTRACT_ADDRESS:
-          print("Error: Missing Keys in .env")
-          return
-
-      account = w3.eth.account.from_key(PRIVATE_KEY)
-      contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=ABI)
-
-      nonce = w3.eth.get_transaction_count(account.address, "pending")
-
-      gas_estimate = contract.functions.executeMining(
-          miner_address
-      ).estimate_gas({"from": account.address})
-
-      tx = contract.functions.executeMining(miner_address).build_transaction(
-          {
-              "from": account.address,
-              "nonce": nonce,
-              "gas": gas_estimate,
-              "gasPrice": w3.eth.gas_price,
-          }
-      )
-
-      signed = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
-      tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-
-      print(f"Mining Successful for {miner_address} | TX: {tx_hash.hex()}")
-  except Exception as e:
-      print(f"Mining Fail: {e}")
-
-
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-
-@app.route("/get_difficulty")
-def get_difficulty():
+def play_sound(kind: str):
     try:
-        contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=ABI)
-        mined = contract.functions.totalMined().call() / 10**18
-        difficulty = 2.0 + (mined / 2_100_000) * 10
-        return jsonify({"difficulty": round(difficulty, 1)})
+        subprocess.Popen(["node", "make-sound.js", kind], cwd=ROOT)
     except Exception as e:
-        print(f"Difficulty fetch failed: {e}")
-        return jsonify({"difficulty": 2.0})
+        print("sound error:", e)
 
 
-@app.route("/mine", methods=["POST"])
-def mine():
-    data = request.get_json(silent=True) or {}
-    miner_addr = data.get("address") or data.get("account")
-
-    if not miner_addr or not w3.is_address(miner_addr):
-        return (
-            jsonify({"status": "error", "message": "Invalid Address"}),
-            400,
+def mint_reward(block_number: int, amount: int):
+    try:
+        tx = contract.functions.mintReward(block_number, amount).build_transaction(
+            {
+                "from": account.address,
+                "nonce": w3.eth.get_transaction_count(account.address),
+                "gas": 300000,
+                "maxFeePerGas": w3.to_wei("30", "gwei"),
+                "maxPriorityFeePerGas": w3.to_wei("1.5", "gwei"),
+            }
         )
+        signed = account.sign_transaction(tx)
+        tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+        print("tx sent:", tx_hash.hex())
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        print("tx mined in block", receipt.blockNumber)
+        play_sound("success")
+    except Exception as e:
+        print("mint error:", e)
+        play_sound("error")
 
-    if not PRIVATE_KEY or not CONTRACT_ADDRESS:
-        return (
-            jsonify({"status": "error", "message": "Server misconfigured"}),
-            500,
-        )
 
-    threading.Thread(
-        target=background_mint,
-        args=(miner_addr,),
-        daemon=True,
-    ).start()
-
-    return jsonify(
-        {
-            "status": "submitted",
-            "message": "Mining transaction submitted in background",
-        }
-    )
+def main():
+    print("Starting BitcoinSolar Python watcher...")
+    while True:
+        # TODO: replace with real miner log parsing
+        fake_block = 12345
+        fake_amount = 1
+        mint_reward(fake_block, fake_amount)
+        time.sleep(30)
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    main()
