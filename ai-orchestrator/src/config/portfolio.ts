@@ -1,35 +1,66 @@
 // ai-orchestrator/src/config/portfolio.ts
 
 export type AllowedToken = {
-  chain: string;          // e.g. "ethereum", "polygon"
-  address: string;        // ERC-20 contract address
-  symbol: string;         // e.g. "ETH", "MATIC"
+  chain: string;      // "ethereum", "polygon", etc.
+  address: string;    // ERC-20 contract address
+  symbol: string;     // e.g. "ETH", "MATIC"
 };
 
 export type AllowedCollection = {
-  chain: string;          // e.g. "ethereum"
-  address: string;        // ERC-721/1155 contract address
-  name: string;           // human-readable name
+  chain: string;      // "ethereum", "polygon"
+  address: string;    // NFT contract address
+  name: string;       // human-readable name
 };
 
 export const PORTFOLIO_CONFIG = {
-  // Public address only – do NOT put private keys here.
+  // PUBLIC wallet address only — never put private keys here.
   hotWalletAddress: "0xYOUR_METAMASK_ADDRESS_HERE",
 
-  // Risk limits
-  // Use only a small hot wallet, never more than 3% of it per trade.
-  maxPerTradePct: 0.03,      // 3% of current hot wallet balance per trade
-  maxPerAssetPct: 0.10,      // optional: 10% cap per single asset
+  // RISK RULES (your exact instructions)
+  maxPerTradePct: 0.03,     // Never more than 3% of hot wallet per trade
+  maxPerAssetPct: 0.10,     // Optional: cap any single asset at 10%
+  dailyMaxGainPct: 0.30,    // Stop for the day if gain > 30%
 
-  // Stop for the day if made more than 30% of initial investment (daily PnL).
-  dailyMaxGainPct: 0.30,     // +30% daily gain → stop planning new trades
-
-  // Scope of operation
+  // CHAINS your orchestrator is allowed to trade on
   allowedChains: ["ethereum", "polygon"] as const,
 
-  // Whitelisted fungible tokens (you must fill these in yourself)
-  allowedTokens: [] as AllowedToken[],
+  // TOKENS your orchestrator is allowed to buy/sell
+  // (blue-chip, liquid, safe to simulate with)
+  allowedTokens: [
+    {
+      chain: "ethereum",
+      address: "0xC02aaa39b223FE8D0A0e5C4F27eAD9083C756Cc2", // WETH
+      symbol: "WETH"
+    },
+    {
+      chain: "ethereum",
+      address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+      symbol: "USDC"
+    },
+    {
+      chain: "polygon",
+      address: "0x0000000000000000000000000000000000001010", // MATIC (native wrapper)
+      symbol: "MATIC"
+    },
+    {
+      chain: "polygon",
+      address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", // USDC on Polygon
+      symbol: "USDC"
+    }
+  ] as AllowedToken[],
 
-  // Whitelisted NFT collections (you must fill these in yourself)
-  allowedCollections: [] as AllowedCollection[],
+  // NFT COLLECTIONS your orchestrator is allowed to buy/sell
+  // (safe defaults — you can add/remove anytime)
+  allowedCollections: [
+    {
+      chain: "ethereum",
+      address: "0xBC4CA0eda7647A8aB7C2061c2E118A18a936f13D", // BAYC
+      name: "BoredApeYachtClub"
+    },
+    {
+      chain: "ethereum",
+      address: "0x60E4d786628Fea6478F785A6d7e704777c86a7c6", // Mutant Ape
+      name: "MutantApeYachtClub"
+    }
+  ] as AllowedCollection[]
 };
