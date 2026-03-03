@@ -5,9 +5,11 @@ import { checkScripts } from "./agents/scriptAgent";
 import { checkMetaMask } from "./agents/metamaskAgent";
 import { getState } from "./state";
 import { TradeAgent } from "./agents/tradeAgent";
+import { IntentExecutor } from "./executor/intentExecutor";
 
-// Instantiate your trading agent
+// Instantiate agents
 const tradeAgent = new TradeAgent();
+const intentExecutor = new IntentExecutor();
 
 async function tick() {
   await Promise.all([
@@ -16,11 +18,11 @@ async function tick() {
     checkMinting(),
     checkScripts(),
     checkMetaMask(),
-    tradeAgent.run() // Run your TradeAgent every tick
+    tradeAgent.run(),
+    intentExecutor.execute()
   ]);
 
   const snapshot = getState();
-
   console.log("AI snapshot:", JSON.stringify(snapshot, null, 2));
 }
 
