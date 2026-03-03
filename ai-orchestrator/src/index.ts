@@ -7,7 +7,6 @@ import { getState } from "./state";
 import { TradeAgent } from "./agents/tradeAgent";
 import { IntentExecutor } from "./executor/intentExecutor";
 
-// Instantiate agents
 const tradeAgent = new TradeAgent();
 const intentExecutor = new IntentExecutor();
 
@@ -29,10 +28,8 @@ async function tick() {
 async function main() {
   console.log("BitcoinSolar AI Orchestrator starting...");
 
-  // Run immediately
   await tick();
 
-  // Run every 30 seconds
   setInterval(tick, 30_000);
 }
 
