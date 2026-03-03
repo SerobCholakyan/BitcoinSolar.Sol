@@ -1,6 +1,15 @@
+import { RPC_ENDPOINTS } from "../config/rpc";
 import { updateState } from "../state";
 import { ServiceName } from "../config";
 import { exec } from "child_process";
+import { ethers } from "ethers";
+
+// Centralized provider resolver
+function getProvider(chain: string, network: string) {
+  const url = RPC_ENDPOINTS?.[chain]?.[network];
+  if (!url) throw new Error(`RPC not found for ${chain}:${network}`);
+  return new ethers.JsonRpcProvider(url);
+}
 
 const NAME: ServiceName = "BitcoinSolarScripts";
 
