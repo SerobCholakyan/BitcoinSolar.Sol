@@ -11,7 +11,10 @@
   },
   "include": [
     "src/index.ts",
-    "src/orchestrator/**/*"
+    "src/agents/**/*",
+    "src/executor/**/*",
+    "src/state/**/*",
+    "src/config/**/*"
   ],
   "exclude": [
     "src/webapp/**/*"
