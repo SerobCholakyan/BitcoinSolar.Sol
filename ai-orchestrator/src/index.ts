@@ -6,28 +6,31 @@ import { checkMetaMask } from "./agents/metamaskAgent";
 import { getState } from "./state";
 import { TradeAgent } from "./agents/tradeAgent";
 
+// Instantiate your trading agent
+const tradeAgent = new TradeAgent();
+
 async function tick() {
   await Promise.all([
     checkWebApp(),
     checkMining(),
     checkMinting(),
     checkScripts(),
-    checkMetaMask()
+    checkMetaMask(),
+    tradeAgent.run() // Run your TradeAgent every tick
   ]);
 
   const snapshot = getState();
-  // This is where your “AI” logic would live:
-  // - detect degraded/down
-  // - trigger redeploys
-  // - call GitHub App / Render / DO hooks
-  // - send alerts
+
   console.log("AI snapshot:", JSON.stringify(snapshot, null, 2));
 }
 
 async function main() {
   console.log("BitcoinSolar AI Orchestrator starting...");
-  // run every 30 seconds
+
+  // Run immediately
   await tick();
+
+  // Run every 30 seconds
   setInterval(tick, 30_000);
 }
 
