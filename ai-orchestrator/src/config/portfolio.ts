@@ -14,7 +14,7 @@ export type AllowedCollection = {
 
 export const PORTFOLIO_CONFIG = {
   // PUBLIC wallet address only — never put private keys here.
-  hotWalletAddress: "0xYOUR_METAMASK_ADDRESS_HERE",
+  hotWalletAddress: "0xe454ebF611e2231477767F4B5303BEEbCe1F7194",
 
   // RISK RULES (your exact instructions)
   maxPerTradePct: 0.03,     // Never more than 3% of hot wallet per trade
