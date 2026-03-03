@@ -1,47 +1,28 @@
 services:
-  - type: worker
-    name: ai-orchestrator
-    env: node
-    rootDir: ai-orchestrator
-    buildCommand: |
-      npm install
-      npm run build
-    startCommand: |
-      npm start
-    autoDeploy: true
-    plan: starter
-    envVars:
-      - key: NODE_VERSION
-        value: 22
-      - key: GITHUB_APP_ID
-        sync: false
-      - key: GITHUB_APP_PRIVATE_KEY
-        sync: false
-      - key: RENDER_DEPLOY_HOOK_WEBAPP
-        sync: false
-      - key: RENDER_DEPLOY_HOOK_BACKEND
-        sync: false
-      - key: DIGITALOCEAN_API_KEY
-        sync: false
-      - key: RPC_URL
-        sync: false
-      - key: CHAIN_ID
-        sync: false
-
   - type: web
     name: bitcoinsolar-webapp
     env: node
-    rootDir: ai-orchestrator/src/webapp
-    buildCommand: |
-      npm install
-      npm run build
-    startCommand: |
-      npm run start
-    autoDeploy: true
     plan: starter
-    buildFilter:
-      paths:
-        - ai-orchestrator/src/webapp/**
+    region: oregon
+    rootDir: ai-orchestrator/webapp
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
       - key: NODE_VERSION
         value: 22
+
+  - type: worker
+    name: bitcoinsolar-orchestrator
+    env: node
+    plan: starter
+    region: oregon
+    rootDir: ai-orchestrator
+    buildCommand: npm install
+    startCommand: node src/index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: INFURA_ETH
+        sync: false
+      - key: INFURA_POLYGON
+        sync: false
