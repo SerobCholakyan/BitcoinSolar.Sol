@@ -31,17 +31,17 @@ services:
   - type: web
     name: bitcoinsolar-webapp
     env: node
-    rootDir: blsr-miner-website
+    rootDir: ai-orchestrator/src/webapp
     buildCommand: |
       npm install
       npm run build
     startCommand: |
-      npm start
+      npm run start
     autoDeploy: true
     plan: starter
     buildFilter:
       paths:
-        - blsr-miner-website/**
+        - ai-orchestrator/src/webapp/**
     envVars:
       - key: NODE_VERSION
         value: 22
