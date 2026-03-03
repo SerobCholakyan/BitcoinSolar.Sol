@@ -59,7 +59,7 @@ export const PORTFOLIO_CONFIG = {
     },
     {
       chain: "ethereum",
-      address: "0x60E4d786628Fea6478F785A6d7e704777c86a7c6", // Mutant Ape
+      address: "0x60E4d786628Fea6478F785A6d7e704777c86a7c6", // MAYC
       name: "MutantApeYachtClub"
     }
   ] as AllowedCollection[]
