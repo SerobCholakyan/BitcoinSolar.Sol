@@ -4,6 +4,7 @@ import { checkMinting } from "./agents/mintingAgent";
 import { checkScripts } from "./agents/scriptAgent";
 import { checkMetaMask } from "./agents/metamaskAgent";
 import { getState } from "./state";
+import { TradeAgent } from "./agents/tradeAgent";
 
 async function tick() {
   await Promise.all([
