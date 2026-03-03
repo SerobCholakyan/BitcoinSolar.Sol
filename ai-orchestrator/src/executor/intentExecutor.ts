@@ -1,5 +1,6 @@
 // ai-orchestrator/src/executor/intentExecutor.ts
-
+import { pushIntent } from "../state/intents";
+import { TxBuilder } from "./txBuilder";
 import { ethers } from "ethers";
 import { RPC_ENDPOINTS } from "../config/rpc";
 import { PORTFOLIO_CONFIG } from "../config/portfolio";
