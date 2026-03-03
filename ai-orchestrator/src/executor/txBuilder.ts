@@ -5,9 +5,9 @@ import { ethers } from "ethers";
 export class TxBuilder {
   constructor() {}
 
-  // -----------------------------
-  // ERC20 Approve
-  // -----------------------------
+  // -------------------------------------------------
+  // ERC-20 approve(spender, amount)
+  // -------------------------------------------------
   buildERC20Approve(token: string, spender: string, amount: bigint) {
     const iface = new ethers.Interface([
       "function approve(address spender, uint256 amount)"
@@ -20,9 +20,9 @@ export class TxBuilder {
     };
   }
 
-  // -----------------------------
-  // ERC20 Transfer
-  // -----------------------------
+  // -------------------------------------------------
+  // ERC-20 transfer(to, amount)
+  // -------------------------------------------------
   buildERC20Transfer(token: string, to: string, amount: bigint) {
     const iface = new ethers.Interface([
       "function transfer(address to, uint256 amount)"
@@ -35,32 +35,48 @@ export class TxBuilder {
     };
   }
 
-  // -----------------------------
-  // Uniswap V2 Swap (ETH → Token)
-  // -----------------------------
-  buildUniswapV2SwapETHForTokens(router: string, tokenOut: string, amountIn: bigint) {
+  // -------------------------------------------------
+  // Uniswap V2: swapExactETHForTokens
+  // (ETH/MATIC → ERC-20; you’ll set router + path)
+  // -------------------------------------------------
+  buildUniswapV2SwapETHForTokens(
+    router: string,
+    tokenOut: string,
+    amountIn: bigint,
+    recipient: string
+  ) {
     const iface = new ethers.Interface([
       "function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)"
     ]);
 
-    const path = ["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", tokenOut];
+    const path = [
+      "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // placeholder “native” token
+      tokenOut
+    ];
+
+    const deadline = Math.floor(Date.now() / 1000) + 300; // +5 minutes
 
     return {
       to: router,
       value: amountIn,
       data: iface.encodeFunctionData("swapExactETHForTokens", [
-        0, // amountOutMin
+        0,        // amountOutMin (you can tighten this in UI)
         path,
-        "0x0000000000000000000000000000000000000000", // replaced by MetaMask
-        Math.floor(Date.now() / 1000) + 300
+        recipient,
+        deadline
       ])
     };
   }
 
-  // -----------------------------
-  // Seaport NFT Buy (scaffold)
-  // -----------------------------
-  buildSeaportBuy(order: any) {
+  // -------------------------------------------------
+  // Seaport NFT buy (scaffold)
+  // You pass in already-built order data from your infra.
+  // -------------------------------------------------
+  buildSeaportBuy(order: {
+    seaportAddress: string;
+    calldata: string;
+    price: string;
+  }) {
     return {
       to: order.seaportAddress,
       data: order.calldata,
@@ -68,10 +84,14 @@ export class TxBuilder {
     };
   }
 
-  // -----------------------------
-  // Blur NFT Buy (scaffold)
-  // -----------------------------
-  buildBlurBuy(order: any) {
+  // -------------------------------------------------
+  // Blur NFT buy (scaffold)
+  // -------------------------------------------------
+  buildBlurBuy(order: {
+    exchange: string;
+    calldata: string;
+    price: string;
+  }) {
     return {
       to: order.exchange,
       data: order.calldata,
