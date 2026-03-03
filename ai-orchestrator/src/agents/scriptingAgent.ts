@@ -17,12 +17,15 @@ export class ScriptAgent {
   private scriptPath: string;
 
   constructor() {
-    // You can change this to any script you want the orchestrator to run
     this.scriptPath = "./scripts/heartbeat.sh";
   }
 
   async run() {
     try {
+      // Example blockchain check using your new RPC map
+      const provider = getProvider("polygon", "mainnet");
+      const latestBlock = await provider.getBlockNumber();
+
       exec(this.scriptPath, (err, stdout, stderr) => {
         if (err) {
           updateState(NAME, "down", `Script error: ${err.message}`);
@@ -34,7 +37,11 @@ export class ScriptAgent {
           return;
         }
 
-        updateState(NAME, "healthy", `Script OK: ${stdout.trim()}`);
+        updateState(
+          NAME,
+          "healthy",
+          `Script OK: ${stdout.trim()} | Polygon block: ${latestBlock}`
+        );
       });
     } catch (e: any) {
       updateState(NAME, "down", `Exception: ${e?.message || "unknown"}`);
