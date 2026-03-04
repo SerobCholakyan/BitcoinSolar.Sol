@@ -1,9 +1,28 @@
-orchestrator:
-  build:
-    context: ./ai-orchestrator
-    dockerfile: Dockerfile
-  container_name: ai-orchestrator
-  ports:
-    - "5050:5050"
-  environment:
-    - NODE_ENV=production
+version: "3.9"
+
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bitcoinsolar-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET}
+      SESSION_EXPIRES_DAYS: 7
+      NEXT_PUBLIC_ORCHESTRATOR_URL: http://orchestrator:5050
+    depends_on:
+      - orchestrator
+
+  orchestrator:
+    build:
+      context: ./ai-orchestrator
+      dockerfile: Dockerfile
+    container_name: ai-orchestrator
+    ports:
+      - "5050:5050"
+    environment:
+      NODE_ENV: production
+      PORT: 5050
