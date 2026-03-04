@@ -1,19 +1,24 @@
 {
-  "name": "ai-orchestrator",
+  "name": "bitcoinsolar-sol",
   "version": "1.0.0",
   "private": true,
-  "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node src/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "axios": "^1.7.0"
+    "next": "14.1.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.4.0"
+    "@types/node": "20.11.0",
+    "@types/react": "18.2.0",
+    "@types/react-dom": "18.2.0",
+    "typescript": "5.3.3",
+    "eslint": "8.56.0",
+    "eslint-config-next": "14.1.0"
   }
 }
