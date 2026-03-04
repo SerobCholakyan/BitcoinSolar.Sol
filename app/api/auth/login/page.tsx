@@ -9,6 +9,19 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const handleLogin = async () => {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    });
+
+    if (res.ok) {
+      window.location.href = "/dashboard";
+    } else {
+      alert("Invalid credentials");
+    }
+  };
+
   return (
     <div
       style={{
@@ -44,16 +57,12 @@ export default function LoginPage() {
         </h1>
 
         <div style={{ marginBottom: "20px" }}>
-          <label style={{ display: "block", marginBottom: "8px" }}>
-            Email
-          </label>
+          <label style={{ display: "block", marginBottom: "8px" }}>Email</label>
           <Input value={email} onChange={setEmail} placeholder="you@example.com" />
         </div>
 
         <div style={{ marginBottom: "28px" }}>
-          <label style={{ display: "block", marginBottom: "8px" }}>
-            Password
-          </label>
+          <label style={{ display: "block", marginBottom: "8px" }}>Password</label>
           <Input
             value={password}
             onChange={setPassword}
@@ -61,9 +70,7 @@ export default function LoginPage() {
           />
         </div>
 
-        <Button onClick={() => console.log("Login attempted")}>
-          Login
-        </Button>
+        <Button onClick={handleLogin}>Login</Button>
 
         <p
           style={{
