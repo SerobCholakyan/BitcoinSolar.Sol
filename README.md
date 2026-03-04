@@ -40,8 +40,6 @@ GitHub Actions workflows for contracts, backend, miner releases, and dashboard d
 
 Repository Structure
 
-(Reflects the actual folders in your repo  github.com)
-
 .
 ├── .github/workflows
 ├── Packages/Contracts
