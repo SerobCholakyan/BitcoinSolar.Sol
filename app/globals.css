@@ -1,0 +1,32 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Smooth fonts */
+html, body {
+  font-family: "Inter", sans-serif;
+  background-color: #0d0d0d;
+  color: #e5e7eb;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove link underline */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Remove list bullets */
+ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
