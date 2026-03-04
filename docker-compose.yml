@@ -1,18 +1,9 @@
-version: "3.9"
-
-services:
-  dashboard:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - JWT_SECRET=${JWT_SECRET}
-      - SESSION_EXPIRES_DAYS=7
-    depends_on:
-      - orchestrator
-
-  orchestrator:
-    build: ./ai-orchestrator
-    environment:
-      - NODE_ENV=production
+orchestrator:
+  build:
+    context: ./ai-orchestrator
+    dockerfile: Dockerfile
+  container_name: ai-orchestrator
+  ports:
+    - "5050:5050"
+  environment:
+    - NODE_ENV=production
