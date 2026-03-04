@@ -89,7 +89,7 @@ The platform is designed for cloud‑native deployment:
 
 3. CI/CD
 
-GitHub Actions workflows (from your repo  github.com):
+GitHub Actions workflows 
 
 • contracts-ci.yml
 • backend-deploy.yml
