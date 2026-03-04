@@ -3,11 +3,11 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install root deps (dashboard + shared)
+# Install dependencies
 COPY package.json package-lock.json* ./
 RUN npm install
 
-# Copy everything (including app/ and ai-orchestrator/)
+# Copy full project
 COPY . .
 
 # Build Next.js dashboard
