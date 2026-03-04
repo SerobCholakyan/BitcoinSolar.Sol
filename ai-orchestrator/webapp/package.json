@@ -2,11 +2,7 @@
   "name": "bitcoin-solar-webapp",
   "version": "1.0.0",
   "private": true,
-  "scripts": {"scripts": {
-  "build": "tsc",
-  "start": "node dist/index.js"
-}
-
+  "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
