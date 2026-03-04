@@ -1,28 +1,24 @@
 services:
   - type: web
-    name: bitcoinsolar-webapp
+    name: bitcoinsolar-dashboard
     env: node
     plan: starter
-    region: oregon
-    rootDir: ai-orchestrator/webapp
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    startCommand: npm run start
     envVars:
-      - key: NODE_VERSION
-        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: SESSION_EXPIRES_DAYS
+        value: "7"
 
   - type: worker
-    name: bitcoinsolar-orchestrator
+    name: ai-orchestrator
     env: node
     plan: starter
-    region: oregon
-    rootDir: ai-orchestrator
-    buildCommand: npm install
-    startCommand: node src/index.js
+    buildCommand: cd ai-orchestrator && npm install
+    startCommand: cd ai-orchestrator && npm run start
     envVars:
-      - key: NODE_VERSION
-        value: 22
-      - key: INFURA_ETH
-        sync: false
-      - key: INFURA_POLYGON
-        sync: false
+      - key: NODE_ENV
+        value: production
