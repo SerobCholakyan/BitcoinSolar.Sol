@@ -1,0 +1,15 @@
+# BitcoinSolar.Sol – Funding Configuration
+# Enables GitHub Sponsors, crypto-native funding, and sovereign ecosystem support channels.
+
+github:
+  - SerobCholakyan
+
+custom:
+  # BitcoinSolar Sovereign Funding Portal
+  - https://bitcoinsolar.org/fund
+
+  # Direct ecosystem support (operator, orchestrator, miner development)
+  - https://bitcoinsolar.org/support
+
+  # Governance, staking, and treasury portal
+  - https://bitcoinsolar.org/stake
