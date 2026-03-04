@@ -234,9 +234,41 @@ cargo run
 ---
 
 Releases
+## Release: v0.1.0‑alpha — Genesis Release
 
-The repo currently has no published releases  github.com.
-Miner binaries and orchestrator builds will be published here once versioning begins.
+This is the first public alpha release of the BitcoinSolar.Sol contract suite. It establishes the foundation for sovereign compute orchestration, miner coordination, and deterministic capital allocation.
+
+### Included in this release
+- Core contract architecture for orchestrator and miner coordination
+- Initial emission curve logic and reward distribution scaffolding
+- Intent queue and transaction builder foundations
+- Modular structure for future expansion of governance and operator tooling
+- Full ABI, bytecode, and flattened contract outputs (available in the Release assets)
+
+### Status
+This is an **alpha**, intended for architecture validation, ecosystem alignment, and early operator experimentation.  
+Not production‑ready. Interfaces and modules may evolve as the orchestrator and miner layers mature.
+
+### Release Assets
+The GitHub Release includes:
+- `BitcoinSolar.Sol-artifacts-v0.1.0-alpha.zip`
+- `BitcoinSolar.Sol-abi-v0.1.0-alpha.json`
+- `BitcoinSolar.Sol-bytecode-v0.1.0-alpha.json`
+- `BitcoinSolar.Sol-flattened-v0.1.0-alpha.sol`
+
+These binaries support integrators, auditors, and orchestrator‑level automation.
+
+---
+
+## Versioning Strategy
+BitcoinSolar follows semantic versioning with pre‑release identifiers:
+- `alpha` for early architecture and interface evolution
+- `beta` for stability and integration testing
+- `rc` for release candidates
+- `stable` for production‑ready deployments
+
+All releases are immutable once published.
+
 
 ---
 
