@@ -1,28 +1,249 @@
-# BitcoinSolar.Sol
+BitcoinSolar.Sol
 
-A sovereign, cloud-native mining and governance platform.
+A sovereign, cloud‑native mining, orchestration, and governance platform powering decentralized compute and capital allocation.
 
-## Components
+---
 
-- Smart contracts
-- Python backend
-- Rust native miner
-- Miner dashboard
-- Operator panel
-- Kubernetes deployment
-- Nginx reverse proxy
-- CI/CD pipelines
+Platform Overview
 
-## Setup
+BitcoinSolar is a modular ecosystem composed of smart contracts, orchestrators, miners, dashboards, and operator tooling. The system is designed for sovereign execution, deterministic orchestration, and trust‑minimized mining operations across cloud, bare‑metal, and native environments.
 
-Copy `.env.example` → `.env` in each service.
+The repository contains all major components required to run the BitcoinSolar network end‑to‑end.
 
-## CI/CD
+---
 
-GitHub Actions:
+Architecture
 
-- contracts-ci.yml
-- backend-deploy.yml
-- native-miner-release.yml
-- dashboard-deploy.yml
-- infra-apply.yml
+Core Components
+
+• Smart Contracts
+Solidity contracts governing identity, staking, mining rights, rewards, and governance.
+• AI Orchestrator
+TypeScript/Python hybrid orchestrator responsible for agent scheduling, health monitoring, and rule‑based execution.
+• Python Backend
+REST API and worker services supporting miner registration, telemetry ingestion, and operator actions.
+• Rust Native Miner
+High‑performance native miner optimized for deterministic workloads and low‑latency execution.
+• Miner Dashboard
+Web interface for miners to monitor performance, rewards, and node health.
+• Operator Panel
+Administrative UI for orchestrator control, agent scheduling, and governance actions.
+• Kubernetes Deployment
+Full manifests for orchestrator, backend, dashboards, and supporting services.
+• Nginx Reverse Proxy
+Unified ingress layer for all web‑facing components.
+• CI/CD Pipelines
+GitHub Actions workflows for contracts, backend, miner releases, and dashboard deployments.
+
+
+---
+
+Repository Structure
+
+(Reflects the actual folders in your repo  github.com)
+
+.
+├── .github/workflows
+├── Packages/Contracts
+├── ai-orchestrator
+├── app
+├── blsr-miner-backend
+├── blsr-miner-website
+├── blsr-native-miner
+├── blsr-operator-panel
+├── contracts
+├── digitalocean-deploy
+└── README.md
+
+
+---
+
+Deployment Model
+
+1. Environment Setup
+
+Each service includes an .env.example.
+Copy and configure:
+
+cp .env.example .env
+
+
+Required values typically include:
+
+• RPC endpoints
+• Wallet private keys (operator)
+• Database URLs
+• Orchestrator intervals
+• Miner identity keys
+• Dashboard API URLs
+
+
+2. Kubernetes
+
+The platform is designed for cloud‑native deployment:
+
+• Orchestrator as a stateful service
+• Backend as scalable API pods
+• Miner dashboard and operator panel as stateless web deployments
+• Nginx ingress for routing
+• Secrets stored in K8s Secret Manager
+
+
+3. CI/CD
+
+GitHub Actions workflows (from your repo  github.com):
+
+• contracts-ci.yml
+• backend-deploy.yml
+• native-miner-release.yml
+• dashboard-deploy.yml
+• infra-apply.yml
+
+
+These automate:
+
+• Contract compilation/testing
+• Backend deployment
+• Miner binary releases
+• Dashboard builds
+• Infrastructure updates
+
+
+---
+
+Component Details
+
+Smart Contracts
+
+Located in:
+
+• Packages/Contracts
+• contracts/
+
+
+Includes:
+
+• Identity registry
+• Miner staking
+• Reward distribution
+• Governance primitives
+
+
+AI Orchestrator
+
+Located in:
+
+• ai-orchestrator/
+
+
+Responsibilities:
+
+• Agent scheduling
+• Health checks
+• Intent queue execution
+• Rule‑based capital allocation
+• Telemetry ingestion
+
+
+Python Backend
+
+Located in:
+
+• blsr-miner-backend/
+
+
+Provides:
+
+• Miner registration
+• Telemetry API
+• Reward calculation endpoints
+• Operator actions
+
+
+Rust Native Miner
+
+Located in:
+
+• blsr-native-miner/
+
+
+Features:
+
+• Deterministic mining loop
+• Low‑latency execution
+• Native OS integration
+• Secure identity signing
+
+
+Miner Dashboard
+
+Located in:
+
+• blsr-miner-website/
+
+
+Provides:
+
+• Miner performance charts
+• Reward history
+• Node health indicators
+
+
+Operator Panel
+
+Located in:
+
+• blsr-operator-panel/
+
+
+Provides:
+
+• Orchestrator control
+• Agent scheduling
+• Governance actions
+• System health overview
+
+
+---
+
+Local Development
+
+Prerequisites
+
+• Node.js 20+
+• Python 3.10+
+• Rust stable
+• Docker + Docker Compose
+• Foundry (for contracts)
+
+
+Install Dependencies
+
+npm install
+pip install -r requirements.txt
+cargo build
+
+
+Run Services
+
+Each service includes its own start script:
+
+npm run dev
+python main.py
+cargo run
+
+
+---
+
+Releases
+
+The repo currently has no published releases  github.com.
+Miner binaries and orchestrator builds will be published here once versioning begins.
+
+---
+
+Contributors
+
+• SerobCholakyan
+
+---
