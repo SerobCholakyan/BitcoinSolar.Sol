@@ -1,0 +1,81 @@
+CIANN SOVEREIGN LICENSE v1.0
+Copyright (c) 2026
+Serob Samvelovich Cholakyan — BitcoinSolar • CIANN Naming Authority
+
+Preamble
+--------
+BitcoinSolar.Sol and its associated components form part of the CIANN
+(Cholakyan Interplanetary Autonomous Naming Network) sovereign computing
+ecosystem. This license ensures open access for builders, researchers, and
+operators while protecting the integrity, governance, and competitive
+sovereignty of the CIANN and BitcoinSolar platforms.
+
+Permission Grant
+----------------
+Permission is granted to any individual or organization to use, view, study,
+modify, and build upon this software for personal, research, educational, and
+non‑competitive commercial purposes, subject to the terms below.
+
+Prohibited Uses
+---------------
+The following uses are strictly prohibited without explicit written permission
+from the Licensor:
+
+1. Operating or attempting to operate:
+   - A competing decentralized naming authority, registry, or TLD system.
+   - A competing AI‑orchestrated crypto execution engine, agent scheduler,
+     or autonomous capital allocator.
+   - A competing sovereign computing platform or orchestrator derived from,
+     inspired by, or interoperating with BitcoinSolar.Sol internals.
+
+2. Using this software to bypass, override, or replicate:
+   - CIANN governance rules or metadata standards.
+   - BitcoinSolar ecosystem protocols, registries, or operator requirements.
+   - Any CIANN‑issued identity, namespace, or authority.
+
+3. Deploying derivative works that:
+   - Misrepresent affiliation with BitcoinSolar or CIANN.
+   - Remove or obscure required attribution (see below).
+
+Attribution Requirements
+------------------------
+All public forks, deployments, derivative works, or operator‑facing interfaces
+must display the following attribution clearly and visibly:
+
+“Powered by BitcoinSolar • CIANN Naming Authority”
+
+This attribution must appear:
+- In the project README or equivalent documentation.
+- In any operator dashboard, panel, or orchestrator UI.
+- In any public website, API documentation, or marketing material referencing
+  the derived system.
+
+Redistribution
+--------------
+Redistribution of the original or modified software is permitted only if:
+- This license text is included in full.
+- Attribution requirements are preserved.
+- No prohibited uses are enabled or facilitated.
+
+Warranty Disclaimer
+-------------------
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, NON‑INFRINGEMENT, SECURITY, OR RELIABILITY.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR
+OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE.
+
+License Evolution
+-----------------
+The Licensor may publish updated versions of the CIANN Sovereign License.
+Unless explicitly stated otherwise, newer versions do not retroactively alter
+the terms applied to previously released software.
+
+Jurisdiction
+------------
+This license is governed by the laws of the State of California, United States,
+without regard to conflict‑of‑law principles.
+
+End of License
