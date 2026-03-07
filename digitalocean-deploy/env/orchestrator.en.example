@@ -6,7 +6,6 @@ REDIS_URL=redis://127.0.0.1:6379/1
 RPC_Polygon_MAINNET=https://polygon-mainnet.infura.io/v3/3f69ffd3c39747099f55586c0dfbe8ed
 RPC_BLSR_CHAIN=https://blsr-rpc.bitcoinsolar.org
 
-
 CHAIN_ID=12345
 POLL_INTERVAL_MS=3000
 
