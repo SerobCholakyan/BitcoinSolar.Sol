@@ -1,0 +1,15 @@
+PORT=3100
+NODE_ENV=production
+
+REDIS_URL=redis://127.0.0.1:6379/1
+
+RPC_ETH_MAINNET=https://your-mainnet-rpc
+RPC_BLSR_CHAIN=https://your-blsr-rpc
+
+CHAIN_ID=12345
+POLL_INTERVAL_MS=3000
+
+BACKEND_PRIVATE_KEY=replace_me
+BACKEND_ADDRESS=replace_me
+
+MAX_RISK_PER_INTENT=0.01
