@@ -1,0 +1,16 @@
+[Unit]
+Description=BitcoinSolar AI Orchestrator
+After=network.target redis-server.service
+
+[Service]
+User=aiorchestrator
+WorkingDirectory=/srv/ai-orchestrator/app
+EnvironmentFile=/srv/ai-orchestrator/config/orchestrator.env
+ExecStart=/usr/bin/node /srv/ai-orchestrator/app/dist/index.js
+Restart=always
+RestartSec=3
+StandardOutput=append:/srv/ai-orchestrator/logs/orchestrator.log
+StandardError=append:/srv/ai-orchestrator/logs/orchestrator.log
+
+[Install]
+WantedBy=multi-user.target
