@@ -277,3 +277,69 @@ Contributors
 • SerobCholakyan
 
 ---
+# ---------------------------------------------------------
+# BitcoinSolar AI Orchestrator — Environment Configuration
+# ---------------------------------------------------------
+# This file defines all runtime configuration for the
+# orchestrator running on a DigitalOcean Droplet.
+# Copy to: /srv/ai-orchestrator/config/orchestrator.env
+# Permissions: chmod 600 orchestrator.env
+# Owner: aiorchestrator
+# ---------------------------------------------------------
+
+# -------------------------
+# Core Runtime
+# -------------------------
+PORT=3100
+NODE_ENV=production
+
+# -------------------------
+# Redis Queue
+# -------------------------
+# Local Redis instance running on the Droplet.
+REDIS_URL=redis://127.0.0.1:6379/1
+
+# -------------------------
+# RPC Endpoints
+# -------------------------
+# Ethereum mainnet RPC (Infura, Alchemy, or custom)
+RPC_ETH_MAINNET=https://replace-with-mainnet-rpc
+
+# BitcoinSolar chain RPC (your chain or testnet)
+RPC_BLSR_CHAIN=https://replace-with-blsr-rpc
+
+# -------------------------
+# Chain Configuration
+# -------------------------
+# Must match the chain ID used by your BitcoinSolar.sol deployment.
+CHAIN_ID=12345
+
+# Polling interval for block scanning (ms)
+POLL_INTERVAL_MS=3000
+
+# -------------------------
+# Backend Node Authorization
+# -------------------------
+# These values MUST match the authorized backend node
+# defined in BitcoinSolar.sol (your active tab).
+BACKEND_PRIVATE_KEY=replace_with_private_key
+BACKEND_ADDRESS=replace_with_backend_wallet
+
+# -------------------------
+# Orchestrator Behavior
+# -------------------------
+# Maximum risk per intent (0.01 = 1%)
+MAX_RISK_PER_INTENT=0.01
+
+# Optional: enable verbose logging
+VERBOSE_LOGGING=false
+
+# Optional: override gas multiplier
+GAS_MULTIPLIER=1.1
+
+# -------------------------
+# GitHub Integration (Optional)
+# -------------------------
+# For auto-deploy or GitHub App integration
+GITHUB_APP_ID=
+GITHUB_APP_PRIVATE_KEY=
