@@ -4,7 +4,8 @@ NODE_ENV=production
 REDIS_URL=redis://127.0.0.1:6379/1
 
 RPC_ETH_MAINNET=https://your-mainnet-rpc
-RPC_BLSR_CHAIN=https://your-blsr-rpc
+RPC_BLSR_CHAIN=https://blsr-rpc.bitcoinsolar.org
+
 
 CHAIN_ID=12345
 POLL_INTERVAL_MS=3000
